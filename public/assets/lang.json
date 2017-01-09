@@ -1,0 +1,37 @@
+{
+  "PL": {
+    "CONNECTION": {
+      "FILED": "Połączenie nie udane.",
+      "DISCONECT": "Polączenie zerwane."
+    },
+    "GAME_MODES": [
+      "FFA",
+      "DRUŻYNY",
+      "THE HUNTED"
+    ],
+    "INTERFACE": {
+      "AMMO": "Amunicja",
+      "ARMOR": "Pancerz",
+      "HEALTH_BAR": "Zdrowie"
+    },
+    "WEAPONS": {
+      "RocketLuncher": "Wyrzutnia rakiet",
+      "LightGun": "Miotacz Cewkowy Tesli",
+      "Bow": "Łuk",
+      "MachineGun": "Mini gun",
+      "CurveGun": "Curve gun",
+      "Spas": "Strzelba Spas"
+    },
+    "BULLETS": {
+      "RocketBullet": "Rakiety",
+      "Light": "Baterie",
+      "Arrow": "Strzałay",
+      "RegularBullet": "Normalny pociski",
+      "LightBullet": "Lekkie pociski",
+      "SpasBullet": "Kule ołowiane"
+    },
+    "GUI": {
+      "PLAY": "Graj"
+    }
+  }
+}

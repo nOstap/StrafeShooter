@@ -1,0 +1,244 @@
+@font-face {
+    font-family: 'Chewy';
+    font-style: normal;
+    font-weight: 400;
+    src: local('Chewy'), url(../fonts/Chewy.ttf) format('ttf');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215, U+E0FF, U+EFFD, U+F000;
+}
+* {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+.dark {
+    background-color:  rgba(0,0,0,.5);
+}
+.select-on {
+    -webkit-touch-callout: initial;
+    -webkit-user-select: initial;
+    -khtml-user-select: initial;
+    -moz-user-select: initial;
+    -ms-user-select: initial;
+    user-select: initial;
+}
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-button {
+    width: 0px;
+    height: 0px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #e1e1e1;
+    border: 0px none #ffffff;
+    border-radius: 50px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #ffffff;
+}
+
+::-webkit-scrollbar-thumb:active {
+    background: #000000;
+}
+
+::-webkit-scrollbar-track {
+    background: #047ac1;
+    border: 0px none #ffffff;
+    border-radius: 46px;
+}
+
+::-webkit-scrollbar-track:hover {
+    background: #666666;
+}
+
+::-webkit-scrollbar-track:active {
+    background: #333333;
+}
+
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+hr {
+    border-color: #58595b;
+}
+
+body {
+    padding: 0;
+    margin: 0;
+    cursor: url('../images/viewfinder.png') 16 16, auto;
+    background: #58595b;
+}
+
+.hidden {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+.game-font {
+    padding: 20px 0;
+    color: white;
+    font-size: 20px;
+    font-family: 'Chewy', cursive;
+}
+
+.game-font-dark {
+    padding: 20px 0;
+    color: rgba(0, 0, 0, 0.75);
+    font-family: 'Chewy', cursive;
+}
+
+.center-box {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    position: absolute;
+    justify-content: center;
+    align-items: center;
+}
+
+.center-box .center-box-inner {
+    width: 500px;
+    height: 500px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    background: rgba(0, 0, 0, .25);
+    border-radius: 4px;
+    box-shadow: inset 0 0 7px 0px rgba(0, 0, 0, .5);
+}
+
+.center-box-heading {
+    border-bottom: 1px solid rgba(0, 0, 0, .25);
+}
+
+.center-box-content {
+    flex-grow: 1;
+    overflow: auto;
+    margin-bottom: 8px;
+}
+.center-box-subheading {
+    font-size: 16px;
+    font-family: monospace;
+    font-weight: bold;
+    display: flex;
+    padding: 8px;
+    justify-content: space-between;
+}
+
+.center-box-content ul {
+    list-style-type: none;
+    padding: 0;
+    font-family: monospace;
+}
+
+.center-box-content li {
+    display: flex;
+    padding: 8px;
+    justify-content: space-between;
+}
+
+
+.center-box-content li.list-item {
+    transition-duration: .2s;
+}
+
+.center-box-content li.list-item:hover {
+    transition-duration: .2s;
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.center-box-content li.list-item.selected, .center-box-content li.list-item:active {
+    background-color: white;
+}
+
+.center-box-content li span, .center-box-subheading span {
+    text-align: right;
+    width: 33%;
+}
+
+.center-box-content li span:first-child, .center-box-subheading span:first-child {
+    text-align: left;
+}
+
+
+.btn-row {
+    display: flex;
+    flex-direction: row;
+    margin: -8px;
+}
+
+.regular-btn {
+    background: rgba(255, 255, 255, 0.5);
+    color: black;
+    font-family: monospace;
+    padding: 8px;
+    margin: 8px;
+    border-radius: 4px;
+    box-shadow: 0 0 4px 0px rgba(0, 0, 0, .5), inset 0 0 4px rgba(0, 0, 0, 0.5);
+}
+.regular-btn.back, .right {
+    margin-left: auto;
+}
+.regular-btn:not(.disabled):hover {
+    transition-duration: 0.2s;
+    box-shadow: 0 0 8px 0px rgba(0, 0, 0, .75), inset 0 0 4px rgba(0, 0, 0, 0.5);
+}
+.regular-btn:not(.disabled):focus, .regular-btn:not(.disabled):active {
+    transition-duration: 0.2s;
+    background: rgba(255,255,255,.75);
+    outline: hidden;
+    box-shadow: 0 0 8px 0px rgba(0, 0, 0, .75), inset 0 0 4px rgba(0, 0, 0, 0.5);
+}
+
+.regular-btn.disabled {
+    color: rgba(0, 0, 0, .25);
+}
+form.form {
+    margin: 16px 0;
+}
+.input-container {
+    font-family: 'Chewy';
+    display: flex;
+    padding: 8px;
+    justify-content: space-between;
+}
+
+.input-container input, .input-container select {
+    position: relative;
+    z-index: 1;
+    color: black;
+    background-color: gray;
+    border: none;
+    margin: 0;
+    padding: 4px;
+}
+.input-container input:focus, .input-container select:focus {
+    outline: 2px solid silver;
+}
+
+.center-box-heading h2 {
+    font-size: 20px;
+    padding: 0;
+}
+
+.loader {
+    display: flex;
+    width: 100%;
+    z-index: 999;
+    height: 100%;
+    flex-direction: column;
+    position: absolute;
+    justify-content: center;
+    align-items: center;
+}
+
+

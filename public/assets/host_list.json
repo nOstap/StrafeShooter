@@ -1,0 +1,15 @@
+[
+  {
+    "name": "Lokalny",
+    "host": "localhost",
+    "location": "Białystok, PL",
+    "port": "3000",
+    "max_players": "10"
+  },
+  {
+    "name": "Mamin Server",
+    "host": "ostapps.ddns.net",
+    "location": "Hajnówka, PL",
+    "port": "3000"
+  }
+]
