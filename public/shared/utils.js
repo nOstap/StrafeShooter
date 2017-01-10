@@ -70,18 +70,16 @@ function super_random(min, max) {
         return this.rand * (max - min) + min;
     }
 }
-_gamesListCreate = function (games) {
-    var list = [];
-    games.forEach(function (game) {
-        list.push({
-            id: game.id,
-            spectators: Object.keys(game.spectators).length,
-            players: Object.keys(game.players).length,
-            mode: game.mode,
-            name: game.name
-        });
-    });
-    return list;
+_gameStatsCreate = function (game) {
+    var stats = {
+        id: game.id,
+        spectators: Object.keys(game.spectators).length,
+        players: Object.keys(game.players).length,
+        mode: game.mode,
+        host: game.host,
+        time: Date.now()
+    };
+    return stats;
 };
 _getVal = function (f, callback) {
     return typeof f == 'function' ? f(callback) : f;
@@ -108,6 +106,7 @@ findByKey = function (array, key, value) {
     if (out.length > 1) return out;
     else return out[0];
 };
+
 Vec2.Rotate = function (vec, rad) {
     var c = Math.cos(rad);
     var s = Math.sin(rad);

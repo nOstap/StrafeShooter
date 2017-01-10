@@ -4,9 +4,16 @@ const fs = require('fs');
 const vm = require('vm');
 const Loop = require('./loop.js');
 
+require('dotenv').config({path: __dirname + '/.env'});
+
 var app = express();
 
-var server = app.listen(process.env.PORT || 3000, listenCallback);
+var server = app.listen(process.env.PORT || 3000, function () {
+    var host = server.address().address;
+    var port = server.address().port;
+    console.log('Server started and listening at http://' + host + ':' + port);
+});
+
 app.get('/*', function (req, res) {
     res.sendfile('index.html');
 });
@@ -43,48 +50,38 @@ var includes =
 
 vm.runInThisContext(includes);
 
-var game = {};
+var game = new GameEngine({
+    id: newGuid_short(),
+    name: process.env.NAME,
+    host: process.env.HOST,
+    port: process.env.PORT,
+    map_index: process.env.MAP_INDEX,
+    map: JSON.parse(fs.readFileSync(__dirname + '/../public/assets/' + MAPS[process.env.MAP_INDEX] + '.json'))
+});
 
 function sync_loop() {
-    socket.emit('sync_game', game._simply());
+    if(game) io.emit('sync_game', game._simply());
 }
 function game_loop() {
-    game.update();
+    if(game) game.update();
 }
 Loop.run(CFG.SYNC_RATE, sync_loop);
 Loop.run(CFG.TICK_RATE, game_loop);
 
-function listenCallback() {
-    var host = server.address().address;
-    var port = server.address().port;
-    console.log('Server started and listening at http://' + host + ':' + port);
-}
-
 app.use(express.static('public'));
 
 io.of('/stats').on('connection', function (socket) {
-
+    socket.emit('connected', _gameStatsCreate(game));
 });
 io.of('/game').on('connection',
     function (socket) {
         console.log('Client ' + socket.id + ' connected.');
-        socket.emit('connected');
-        socket.on('game_create', function (data) {
-            data.id = socket.id + newGuid_short();
-            data.owner = socket.id;
-            game = new GameEngine(data);
-            game.map = JSON.parse(fs.readFileSync(__dirname + '/../public/assets/' + MAPS[game.map_index] + '.json'));
-            var player = new Player({id: socket.id, displayName: data.displayName, gameID: data.id});
-            game.addSpectator(player);
-            game.setup();
-            socket.emit('game_connected', game._simply());
-        });
-            var player = new Player({id: socket.id, displayName: data.displayName, gameID: data.gameID});
-            game.addSpectator(player);
-            var sGame = game._simply();
-            socket.emit('player_joined_game', player._simply());
-            socket.emit('game_connected', sGame);
-        });
+        var player = new Player({id: socket.id, displayName: data.displayName, gameID: data.gameID});
+        game.addSpectator(player);
+        var sGame = game._simply();
+        socket.emit('player_joined_game', player._simply());
+        socket.emit('connected', sGame);
+
         socket.on('match_join', function (gameID) {
             game.joinMatch(socket.id);
             io.emit('player_joined_match', game.players[socket.id]._simply());

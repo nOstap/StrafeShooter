@@ -1,6 +1,6 @@
 function Gui() {
     this.active_state = null;
-    this.selected_game = null;
+    this.selected_server = null;
     this.game_settings = JSON.parse(localStorage.getItem('ss_game_settings'));
     if (!this.game_settings)
         this.game_settings = JSON.parse(CFG.INIT_GAME_SETTINGS);
@@ -44,14 +44,13 @@ Gui.prototype.createGame = function () {
         data[input.attribute('name')] = input.value();
     }
     data.displayName = this.game_settings.player_name;
-    SOCKET.emit('game_create', data);
+    this.selected_server = HOST_LIST[0];
 };
 Gui.prototype.joinGame = function () {
     gui.showLoader();
-    server = HOST_LIST[this.selected_game];
-    SOCKET = io.connect('http://' + server.host + '/game:'+server.port);
 
-    // SOCKET.emit('game_join', {gameID: this.selected_game, displayName: this.game_settings.player_name});
+    SOCKET = io.connect('http://' + this.selected_server.host + '/game:' + this.selected_server.port);
+    SOCKET.emit('game_join', {displayName: this.game_settings.player_name});
 };
 Gui.prototype.joinMatch = function () {
     gui.hide();
@@ -78,11 +77,9 @@ Gui.prototype.applySettings = function () {
         fullscreen(false);
 };
 Gui.prototype.showServerList = function () {
-
-};
-Gui.prototype.refreshList = function () {
-    this.showLoader();
-    SOCKET.emit('games_list_request');
+    this.hide('HOME');
+    this.setServerList();
+    this.show('SERVER_LIST');
 };
 Gui.prototype.setupSocket = function () {
     SOCKET.on('connect_error', function () {
@@ -196,23 +193,41 @@ Gui.prototype.setPlayerList = function (game) {
     }
 };
 Gui.prototype.setServerList = function (list) {
-    var ul = select('ul', select(GAME_STATES.GAMES_LIST.id));
+    var ul = select('ul', select(GAME_STATES.SERVER_LIST.id));
     ul.html('');
-    for (var i = 0; i < list.length; i++) {
-        var e = list[i];
-        var game = createElement('li', '<span>' + e.name + '</span><span>' + STRINGS[CFG.LANG].GAME_MODES[e.mode] + '</span><span>' + e.players + '/' + e.spectators + '</span>');
-        game.game_id = e.id;
-        game.mousePressed(function () {
+    for (var i in HOST_LIST) {
+        var host = HOST_LIST[i],
+            server = {};
+        host.ping = 0;
+        host.online = false;
+        host.status = 'offline';
+        host.players = 0;
+        server.host = host;
+        server.elm = createElement('li', '<span>' + host.name + '</span><span>' + host.status + '</span><span>' + host.players + '/' + host.max_players + '</span>');
+        server.socket = io.connect('http://' + host.host + ':' + host.port + '/stats');
+        server.socket.parent = server;
+        server.elm.parent = server;
+        server.socket.on('connected', function (data) {
+            this.parent.host.ping = Date.now() - data.time ;
+            this.parent.host.online = true;
+            this.parent.host.status = 'online';
+            this.parent.host.players = data.players + data.spectators;
+            this.parent.element = this.parent.elm.html('<span>' + this.parent.host.name + '</span><span>' + this.parent.host.status + ' (' + this.parent.host.ping + 'ms)</span><span>' + this.parent.host.players + '/' + this.parent.host.max_players + '</span>');
+            this.disconnect();
+        });
+        server.elm.mousePressed(function () {
             var list = selectAll('li', ul);
             list.forEach(function (el) {
                 el.removeClass('selected');
             });
             this.addClass('selected');
-            gui.selected_game = this.game_id;
-            select('#join-game').removeClass('disabled');
+            gui.selected_server = this.parent;
+            var btn = select('#join-game');
+            if (this.parent.host.online) btn.removeClass('disabled');
+            else btn.addClass('disabled');
         });
-        game.addClass('list-item');
-        ul.child(game);
+        server.elm.addClass('list-item');
+        ul.child(server.elm);
     }
 };
 Gui.prototype.leaveGame = function () {
@@ -239,6 +254,5 @@ Gui.prototype.hide = function (s) {
     if (!s) s = this.active_state;
     var state = GAME_STATES[s];
     var elm = select(state.id);
-    if (elm.attribute('class').indexOf('hidden') == -1)
-        select(state.id).addClass('hidden');
+    select(state.id).addClass('hidden');
 };

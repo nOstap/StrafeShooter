@@ -14,18 +14,18 @@ const GAME_STATES = {
         prevState: 'HOME',
         buttons: null,
     },
-    GAMES_LIST: {
+    SERVER_LIST: {
         id: '#games-list',
         prevState: 'HOME',
         buttons: [
             {id: '#join-game', action: 'joinGame'},
             {id: '#start-new', state: 'START_NEW_GAME'},
-            {id: '#refresh-list', action: 'refreshList'}
+            {id: '#refresh-list', action: 'setServerList'}
         ]
     },
     START_NEW_GAME: {
         id: '#start-new-game',
-        prevState: 'GAMES_LIST',
+        prevState: 'SERVER_LIST',
         form: [
             '#game-name',
             '#game-max-players',

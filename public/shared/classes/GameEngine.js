@@ -2,7 +2,7 @@ function GameEngine(setup) {
     this.id = setup.id || null;
     this.local_player = null;
     this.name = setup.game_name || null;
-    this.owner = setup.owner || null;
+    this.host = setup.host || null;
     this.mode = setup.game_mode || 0;
     this.map_index = setup.game_map || 0;
     this.map = null;
@@ -323,8 +323,8 @@ GameEngine.prototype._simply = function () {
     var game = {
         id: this.id,
         name: this.name,
-        owner: this.owner,
         mode: this.mode,
+        host: this.host,
         max_players: this.max_players,
         map_index: this.map_index,
         round_time: this.round_time,

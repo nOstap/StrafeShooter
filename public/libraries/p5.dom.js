@@ -1049,10 +1049,9 @@
   p5.Element.prototype.addClass = function(c) {
     if (this.elt.className) {
       // PEND don't add class more than once
-      //var regex = new RegExp('[^a-zA-Z\d:]?'+c+'[^a-zA-Z\d:]?');
-      //if (this.elt.className.search(/[^a-zA-Z\d:]?hi[^a-zA-Z\d:]?/) === -1) {
+      if (this.elt.className.indexOf(c) === -1) {
       this.elt.className = this.elt.className+' '+c;
-      //}
+      }
     } else {
       this.elt.className = c;
     }
