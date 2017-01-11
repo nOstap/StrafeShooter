@@ -39,7 +39,6 @@ GameEngine.prototype.setup = function (data) {
             engine.onCollision(uDataA, uDataB);
         }
     }, this);
-
     this.loadMap();
     if (IS_SERVER) {
         // CREATE INIT ENTITIES
@@ -47,7 +46,7 @@ GameEngine.prototype.setup = function (data) {
         this.local_player = SOCKET.id;
         for (var i = 0; i < data.entities.length; i++) {
             var entDef = data.entities[i];
-            var ent = new global[entDef.constructor.name](entDef);
+            var ent = new global[entDef.class](entDef);
             if (ent.isPlayer)
                 this.addPlayer(ent);
             else
@@ -71,21 +70,17 @@ GameEngine.prototype.update = function () {
     this.delta = 1 / this.fps;
     if (this.delta > 0.25) this.delta = 0.25;
     this.last_tick = Date.now();
-
     for (var i = 0; i < this.entities.length; i++) {
         var ent = this.entities[i];
         if (!ent._killed && ent._spawned)
             this.entities[i].update();
     }
-
     for (var i = 0; i < this._spawnBuffer.length; i++) {
         var spawn = this._spawnBuffer[i];
         if (Date.now() - spawn.startTime >= spawn.delay) {
             var entity = this.getEntityById(spawn.entityID);
-            entity.physBody.SetActive(true);
             entity.health = entity.maxHealth;
-            if (entity.physBody)
-                entity.physBody.SetPosition(spawn.position);
+            if (entity.physBody) entity.physBody.SetPosition(spawn.position);
             entity._spawned = true;
             SoundManager.worldPlay('SFX.EFFECTS.RESPAWN', spawn.position);
             _earse(this._spawnBuffer, spawn);
@@ -135,16 +130,14 @@ GameEngine.prototype.loadMap = function () {
     }
 
 };
-GameEngine.prototype.joinMatch = function (id, player_info) {
-
+GameEngine.prototype.joinMatch = function (id) {
     var player = this.spectators[id];
     if (!player.isSpectator) return;
     player.isSpectator = false;
-    delete this.spectators[id];
-
     this.addPlayer(player);
     this.spawn(player.id, CFG.PLAYER.SPAWN_TIME);
     player = null;
+    delete this.spectators[id];
 };
 
 GameEngine.prototype.addSpectator = function (s) {
@@ -156,7 +149,7 @@ GameEngine.prototype.addPlayer = function (p) {
 };
 
 GameEngine.prototype.spawn = function (entityID, delay, team) {
-    if(IS_SERVER) return;
+    if (IS_SERVER) return;
     var info = {};
     info.delay = delay;
     info.team = team;
@@ -167,12 +160,11 @@ GameEngine.prototype.spawn = function (entityID, delay, team) {
 };
 GameEngine.prototype.removePlayer = function (id) {
     var p = this.players[id] || this.spectators[id];
-    if (p && p.physBody)
-        p._markToKill = true;
-    else {
-        delete this.spectators[id];
-        delete this.players[id];
+    if (!p.isSpectator) {
+        this.removeEntity(p);
     }
+    delete this.spectators[id];
+    delete this.players[id];
 };
 GameEngine.prototype.addEntity = function (entity) {
     entity.setup(this);
@@ -194,6 +186,8 @@ GameEngine.prototype.sync = function (data) {
         if (this.snap_entities[snap.id]) {
             this.snap_entities[snap.id].physBody.SetPosition(snap.position);
             this.snap_entities[snap.id].physBody.SetAngle(snap.angle);
+            this.snap_entities[snap.id].position = snap.position;
+            this.snap_entities[snap.id].angle = snap.angle;
         } else {
             var ent = new global[snap.class](snap);
             ent.setup(this);
@@ -202,10 +196,11 @@ GameEngine.prototype.sync = function (data) {
         }
         if (snap.isPlayer) {
             var lp = this.players[snap.id];
-            if(lp.id != this.local_player) lp.applyInput(snap.input, data.delta);
-            lp.input.fire = snap.input.fire;
+            if (lp.id != this.local_player) lp.applyInput(snap.input, data.delta);
             lp.physBody.SetPosition(snap.position);
             lp.physBody.SetAngle(snap.angle);
+            lp.position = snap.position;
+            lp.angle = snap.angle;
         }
         snap = null;
     }
@@ -219,24 +214,24 @@ GameEngine.prototype.getEntityById = function (id) {
 };
 GameEngine.prototype.recordInput = function () {
     var lp = this.players[this.local_player];
-
     if (!IS_SERVER) {
-        if(INPUT.PAUSE)
+        if (INPUT.PAUSE)
             gui.show('PAUSE');
         else
             gui.hide('PAUSE');
-        if (INPUT.CAMERA_UP)
-            CAMERA_CENTER.y -= 1;
-        if (INPUT.CAMERA_DOWN)
-            CAMERA_CENTER.y += 1;
-        if (INPUT.CAMERA_LEFT)
-            CAMERA_CENTER.x -= 1;
-        if (INPUT.CAMERA_RIGHT)
-            CAMERA_CENTER.x += 1;
+        if (!lp) {
+            if (INPUT.CAMERA_UP)
+                CAMERA_CENTER.y -= 1;
+            if (INPUT.CAMERA_DOWN)
+                CAMERA_CENTER.y += 1;
+            if (INPUT.CAMERA_LEFT)
+                CAMERA_CENTER.x -= 1;
+            if (INPUT.CAMERA_RIGHT)
+                CAMERA_CENTER.x += 1;
+        }
     }
 
-    if (!lp) return;
-
+    if (!lp || !lp._spawned) return;
     var pInput = {
         x: 0,
         y: 0,

@@ -5,6 +5,15 @@ function Gui() {
     if (!this.game_settings)
         this.game_settings = JSON.parse(CFG.INIT_GAME_SETTINGS);
     var backs = selectAll('.back');
+    var soundBtns = selectAll('.sound-btn');
+    for (var i = 0 ; i < soundBtns.length; i++) {
+        soundBtns[i].mousePressed(function () {
+            SoundManager.play('SFX.INTERFACE.BUTTON_CLICK');
+        });
+        soundBtns[i].mouseOver(function () {
+            SoundManager.play('SFX.INTERFACE.BUTTON_HOVER');
+        });
+    }
     for (var i = 0; i < backs.length; i++) {
         backs[i].mousePressed(function () {
             gui.back();
@@ -37,6 +46,7 @@ function Gui() {
     }
 }
 Gui.prototype.createGame = function () {
+    gui.showLoader();
     var data = {};
     var stateForm = GAME_STATES[this.active_state].form;
     for (var i = 0; i < stateForm.length; i++) {
@@ -44,13 +54,16 @@ Gui.prototype.createGame = function () {
         data[input.attribute('name')] = input.value();
     }
     data.displayName = this.game_settings.player_name;
-    this.selected_server = HOST_LIST[0];
+    httpGet('/local-server', data, 'json', function (res) {
+        this.selected_server = {
+            host: HOST_LIST[0]
+        }
+        if (res) _setupSocket();
+    });
 };
 Gui.prototype.joinGame = function () {
     gui.showLoader();
-
-    SOCKET = io.connect('http://' + this.selected_server.host + '/game:' + this.selected_server.port);
-    SOCKET.emit('game_join', {displayName: this.game_settings.player_name});
+    _setupSocket();
 };
 Gui.prototype.joinMatch = function () {
     gui.hide();
@@ -81,68 +94,6 @@ Gui.prototype.showServerList = function () {
     this.setServerList();
     this.show('SERVER_LIST');
 };
-Gui.prototype.setupSocket = function () {
-    SOCKET.on('connect_error', function () {
-        gui.disable(GAME_STATES.HOME.buttons[0].id);
-        gui.hide();
-        if (gameEngine)
-            gameEngine.halt();
-        gui.show('CONNECTION_ERROR');
-        console.log(STRINGS[CFG.LANG].CONNECTION.FILED);
-    });
-    SOCKET.on('connected', function (data) {
-        console.log('You\'r connected to server.');
-    });
-    SOCKET.on('game_list', function (data) {
-        console.log('Game list updated.');
-        gui.hideLoader();
-    });
-    SOCKET.on('game_connected', function (sGame) {
-        gui.hide();
-        gui.hideLoader();
-        gui.show('SPECTATE');
-        select('#game-name-header').html(sGame.name);
-        gameEngine = new GameEngine(sGame);
-        gameEngine.setup(sGame);
-        gui.setPlayerList(gameEngine);
-        console.log('You\'r connected to game ' + sGame.id);
-    });
-    SOCKET.on('player_leaved', function (data) {
-        console.log('Player ' + data + ' has left the game.');
-        gameEngine.removePlayer(data);
-        gui.setPlayerList(gameEngine);
-        console.log(STRINGS[CFG.LANG].CONNECTION.DISCONECT);
-    });
-    SOCKET.on('halt_game', function () {
-        if (!gameEngine) return;
-        gameEngine.halt();
-        gui.hide('SPECTATE');
-        gui.show('GAMES_LIST');
-    });
-
-    SOCKET.on('player_joined_game', function (player_info) {
-        console.log('New player joined to game ' + player_info.id);
-        var spectator = new Player(player_info);
-        gameEngine.addSpectator(spectator);
-        gui.setPlayerList(gameEngine);
-    });
-    SOCKET.on('player_joined_match', function (player_info) {
-        console.log(player_info.id + 'joined match!');
-        gameEngine.joinMatch(player_info.id, player_info);
-        gui.setPlayerList(gameEngine);
-    });
-    SOCKET.on('spawn_buffer', function (data) {
-        console.log('spawn arrived');
-        gameEngine._spawnBuffer = data;
-    });
-    SOCKET.on('input_update', function (data) {
-        gameEngine.applyPlayerInput(data.playerID, data.input, data.time);
-    });
-    SOCKET.on('sync_game', function (data) {
-        gameEngine.sync(data);
-    });
-};
-
 Gui.prototype.saveSettings = function () {
     var data = {};
     var stateForm = GAME_STATES[this.active_state].form;
@@ -203,16 +154,16 @@ Gui.prototype.setServerList = function (list) {
         host.status = 'offline';
         host.players = 0;
         server.host = host;
-        server.elm = createElement('li', '<span>' + host.name + '</span><span>' + host.status + '</span><span>' + host.players + '/' + host.max_players + '</span>');
-        server.socket = io.connect('http://' + host.host + ':' + host.port + '/stats');
+        server.elm = createElement('li', '<span>No game created / ' + host.name + '</span><span>' + host.status + '</span><span>' + host.players + '/' + host.max_players + '</span>');
+        server.socket = io.connect('http://' + host.host + ':' + host.port + '/stats', {reconnection: false});
         server.socket.parent = server;
         server.elm.parent = server;
         server.socket.on('connected', function (data) {
-            this.parent.host.ping = Date.now() - data.time ;
+            this.parent.host.ping = Date.now() - data.time;
             this.parent.host.online = true;
             this.parent.host.status = 'online';
             this.parent.host.players = data.players + data.spectators;
-            this.parent.element = this.parent.elm.html('<span>' + this.parent.host.name + '</span><span>' + this.parent.host.status + ' (' + this.parent.host.ping + 'ms)</span><span>' + this.parent.host.players + '/' + this.parent.host.max_players + '</span>');
+            this.parent.element = this.parent.elm.html('<span>' + data.name + ' / ' + this.parent.host.name + '</span><span>' + this.parent.host.status + ' (' + this.parent.host.ping + 'ms)</span><span>' + this.parent.host.players + '/' + this.parent.host.max_players + '</span>');
             this.disconnect();
         });
         server.elm.mousePressed(function () {
@@ -231,10 +182,10 @@ Gui.prototype.setServerList = function (list) {
     }
 };
 Gui.prototype.leaveGame = function () {
-    SOCKET.emit('leave_game');
+    SOCKET.disconnect();
     gameEngine.halt();
     this.hide('SPECTATE');
-    this.show('GAMES_LIST');
+    this.show('SERVER_LIST');
 };
 Gui.prototype.show = function (s) {
     this.active_state = s;

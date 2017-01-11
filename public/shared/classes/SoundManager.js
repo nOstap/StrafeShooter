@@ -1,8 +1,8 @@
 const SoundManager = {
     play: function (sfxName, mode, volume) {
-        if(!IS_SERVER) {
+        if (!IS_SERVER) {
             var sfx = eval(sfxName);
-            if(!sfx) return;
+            if (!sfx) return;
             if (mode == 1) {
                 if (!sfx.isPlaying())
                     sfx.play();
@@ -13,7 +13,7 @@ const SoundManager = {
                 sfx.play();
         }
     },
-    worldPlay: function(sfx, pos, mode) {
+    worldPlay: function (sfx, pos, mode) {
         var volume = 'fixed';
         this.play(sfx, mode, volume);
         // if (position !== 'undefined') {
@@ -23,12 +23,14 @@ const SoundManager = {
         // sfx.setVolume(volume);
     },
     stop: function (sfxName) {
-        if(!IS_SERVER) {
+        if (!IS_SERVER) {
             var sfx = eval(sfxName);
             if (sfx.isPlaying()) sfx.stop();
         }
     },
     update: function () {
-        masterVolume(gui.game_settings.mute_sound?0:1);
+        if (!IS_SERVER) {
+            masterVolume(gui.game_settings.mute_sound ? 0 : 1);
+        }
     }
 };

@@ -71,6 +71,7 @@ const CFG = {
 INPUT = {};
 SFX = {};
 STRINGS = [];
+SOCKET = {};
 CAMERA_CENTER = {x:0, y:0};
 FONT = null;
 MAPS = [

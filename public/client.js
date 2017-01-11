@@ -70,6 +70,7 @@ const GAME_STATES = {
 var gameEngine;
 var gui;
 var pre_loaded_maps = [];
+var global = window;
 var CAMERA_POS = {x: 0, y: 0};
 CAMERA_CENTER = {x: CFG.MAP_WIDTH * .5, y: CFG.MAP_HEIGHT * .5};
 function preload() {
@@ -93,7 +94,10 @@ function preload() {
     gui.setLoadingInfo('Loading sounds');
     SFX = {
         BACKGROUND: loadSound('assets/sfx/background.mp3'),
-        INTERFACE: {},
+        INTERFACE: {
+            BUTTON_CLICK: loadSound('assets/sfx/interface/button_click.wav'),
+            BUTTON_HOVER: loadSound('assets/sfx/interface/button_hover.wav')
+        },
         EFFECTS: {
             PLAY: loadSound('assets/sfx/effects/play.wav'),
             JUMP: loadSound('assets/sfx/effects/jump.wav'),

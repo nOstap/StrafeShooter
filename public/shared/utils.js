@@ -9,6 +9,7 @@ next = function (db, key) {
     return i !== -1 && keys[i + 1] && db[keys[i + 1]];
 };
 newGuid_short = function () {
+    //TODO: REFRACTOR UGLY NAME OF F()
     var S4 = function () {
         return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
     };
@@ -76,6 +77,7 @@ _gameStatsCreate = function (game) {
         spectators: Object.keys(game.spectators).length,
         players: Object.keys(game.players).length,
         mode: game.mode,
+        name: game.name,
         host: game.host,
         time: Date.now()
     };
@@ -106,7 +108,6 @@ findByKey = function (array, key, value) {
     if (out.length > 1) return out;
     else return out[0];
 };
-
 Vec2.Rotate = function (vec, rad) {
     var c = Math.cos(rad);
     var s = Math.sin(rad);
@@ -121,4 +122,55 @@ Vec2.prototype.Rotate = function (rad) {
     this.x = x;
     this.y = y;
     return this;
+};
+
+_setupSocket = function () {
+    SOCKET = io.connect('http://' + gui.selected_server.host.host + ':' + gui.selected_server.host.port + '/game', {
+        query: 'displayName=' + gui.game_settings.player_name
+    });
+    SOCKET.on('connected', function (data) {
+        console.log('You\'r connected to game ' + data.id);
+        gui.hide();
+        gui.hideLoader();
+        gui.setPlayerList(data);
+        gui.show('SPECTATE');
+        select('#game-name-header').html(data.name);
+        gameEngine = new GameEngine(data);
+        gameEngine.setup(data);
+    });
+    SOCKET.on('player_leaved', function (data) {
+        console.log('Player ' + data + ' has left the game.');
+        gameEngine.removePlayer(data);
+        gui.setPlayerList(gameEngine);
+        console.log(STRINGS[CFG.LANG].CONNECTION.DISCONECT);
+    });
+    SOCKET.on('player_joined_game', function (player_info) {
+        console.log('New player joined to game ' + player_info.id);
+        var spectator = new Player(player_info);
+        gameEngine.addSpectator(spectator);
+        gui.setPlayerList(gameEngine);
+    });
+    SOCKET.on('player_joined_match', function (player_info) {
+        console.log(player_info.id + 'joined match!');
+        gameEngine.joinMatch(player_info.id, player_info);
+        gui.setPlayerList(gameEngine);
+    });
+    SOCKET.on('spawn_buffer', function (data) {
+        console.log('Spawn arrived!');
+        gameEngine._spawnBuffer = data;
+    });
+    SOCKET.on('input_update', function (data) {
+        gameEngine.applyPlayerInput(data.playerID, data.input, data.time);
+    });
+    SOCKET.on('sync_game', function (data) {
+        gameEngine.sync(data);
+    });
+    SOCKET.on('connect_error', function () {
+        console.log(STRINGS[CFG.LANG].CONNECTION.FILED);
+        gui.hideLoader();
+        gui.disable(GAME_STATES.HOME.buttons[0].id);
+        gui.hide();
+        if (gameEngine) gameEngine.halt();
+        gui.show('CONNECTION_ERROR');
+    });
 };
