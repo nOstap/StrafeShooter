@@ -1,5 +1,5 @@
 function Entity() {
-    this.id = this.constructor.name+newGuid_short();
+    this.id = this.constructor.name+_guid();
     this.class = this.constructor.name;
     this.physBody = null;
     this.engine = null;

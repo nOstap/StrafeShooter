@@ -2,21 +2,21 @@ Energy.prototype = Object.create(Entity.prototype);
 Energy.prototype.constructor = Energy;
 function Energy(parent) {
     Entity.call(this);
-    this.id = "Energy" + newGuid_short();
+    this.id = "Energy" + _guid();
     this.parent = parent;
-    this.lifetime = 200;
+    this.lifetime = 300;
     this._spawned = true;
     this.physBody = null;
-    this.damage = 2;
+    this.damage = 5;
 }
 Energy.prototype.setup = function (engine) {
     Entity.prototype.setup.call(this, engine);
     var entityDef = {
         position: this.parent.position.Copy(),
-        radius: 0.02,
+        radius: 0.05,
         allowSleep: false,
         friction: 0,
-        density: 1000,
+        density: 10000,
         restitution: 1,
         userData: {
             id: this.id,
@@ -34,7 +34,7 @@ Energy.prototype.release = function (force) {
     if (this.physBody !== null) {
         this.createdAt = Date.now();
         this.physBody.SetActive(true);
-        var energy_value = 200;
+        var energy_value = 2000;
         force.Normalize();
         force.Multiply(energy_value * this.engine.delta);
         this.physBody.ApplyImpulse(force, this.physBody.GetWorldCenter())
@@ -47,8 +47,9 @@ Energy.prototype.colide = function (body) {
     if (dmgBuf != null)
         damage *= dmgBuf.multipler;
     if (body.health != null)
-        body.health -= damage;
-}
+        this.engine.dealDamage(body.id, damage);
+    if(body.isPlayer) this._markToKill = true;
+};
 Energy.prototype.update = function () {
     if (this.physBody.IsActive())
     if (this.lifetime != null) {
@@ -64,7 +65,7 @@ Energy.prototype.update = function () {
         this.position = this.physBody.position;
     }
 
-}
+};
 Energy.prototype._simply = function () {
     return null;
-}
+};

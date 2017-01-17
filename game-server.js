@@ -9,7 +9,7 @@ app.use(express.static(__dirname + '/public'));
 var server = app.listen(80, function () {
     var host = server.address().address || 'localhost';
     var port = server.address().port;
-    console.log('Your game server started and listening at http://' + host + ':' + port);
+    console.log('Your game server started and listening at ' + host + ':' + port);
 });
 app.get('/', function (req, res) {
     res.render('index');

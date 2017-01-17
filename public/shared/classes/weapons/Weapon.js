@@ -44,7 +44,7 @@ Weapon.prototype.addAmmo = function (count) {
         this.ammunition += this.ammoFeed;
 };
 Weapon.prototype.fire = function () {
-    if (Date.now()-this.reloadTime >= this.delay) {
+    if (Date.now() - this.reloadTime >= this.delay) {
         this.reloadTime = Date.now();
         if (this.ammunition > 0) {
             SoundManager.play(this.sfx.fire, null, this.sfxMode);
@@ -93,14 +93,7 @@ function Bullet(weapon) {
     this.energy = null;
     this.zIndex = 1;
     this.animationState = 'fly';
-    if (!IS_SERVER)
-        this.anim = {
-            fly: new Animation({
-                frames: [
-                    SPR_OBJ.frames.regular_bullet
-                ]
-            })
-        }
+    this.anim = 'ANIMATIONS.BULLETS.REGULARBULLET';
 }
 Bullet.prototype._simply = function () {
     return null;
@@ -111,12 +104,12 @@ Bullet.prototype.kill = function () {
     Entity.prototype.kill.call(this);
 };
 Bullet.prototype.draw = function () {
-    this.anim[this.animationState].animate(this.position.x * SCALE, this.position.y * SCALE, this.angle);
+    Animation.animate(this.anim, this.animationState, this.position.x * SCALE, this.position.y * SCALE, this.angle);
 };
 Bullet.prototype.update = function () {
     Entity.prototype.update.call(this);
-    if(!IS_SERVER && CFG.BULLET_TAIL)
-    this.tail.push(this.position);
+    if (!IS_SERVER && CFG.BULLET_TAIL)
+        this.tail.push(this.position);
     if (this.physBody !== null) {
         var vel = this.physBody.GetLinearVelocity();
         this.physBody.SetAngle(Math.atan2(vel.y, vel.x));
@@ -131,7 +124,7 @@ Bullet.prototype.setup = function (engine) {
         this.target.x - this.weapon.player.getFixedPos().x,
         this.target.y - this.weapon.player.getFixedPos().y
     );
-    this.weapon.player.lookAngle = Math.atan2(this.direction.y, this.direction.x);
+    this.weapon.player.physBody.SetAngle(Math.atan2(this.direction.y, this.direction.x));
     var pFix = this.weapon.player.getShootFix();
     this.direction.Subtract(pFix);
     this.position.Add(pFix);
@@ -164,8 +157,8 @@ Bullet.prototype.setup = function (engine) {
             this.energy[i] = e;
             engine.addEntity(e);
         }
-    this.direction.x += super_random(this.weapon.dispersion) - this.weapon.dispersion * 0.5;
-    this.direction.y += super_random(this.weapon.dispersion) - this.weapon.dispersion * 0.5;
+    this.direction.x += _superRandom(this.weapon.dispersion) - this.weapon.dispersion * 0.5;
+    this.direction.y += _superRandom(this.weapon.dispersion) - this.weapon.dispersion * 0.5;
     this.direction.Normalize();
     this.direction.Multiply(this.speed * this.engine.delta);
     this.physBody.ApplyImpulse(this.direction, this.physBody.GetWorldCenter());
@@ -177,8 +170,8 @@ Bullet.prototype.colide = function (body) {
     if (dmgBuf != null)
         damage *= dmgBuf.multipler;
     if (body.health != null)
-        body.health -= damage;
+        this.engine.dealDamage(body.id, damage);
     this.damage *= this.persistence;
-    SoundManager.worldPlay(body.sfx.hurt, this.position);
-    if (this._dieAtHit) this._markToKill = true;
+    SoundManager.worldPlay(body.sfx.hurt, this.position, 1);
+    if (this._dieAtHit || body.isPlayer) this._markToKill = true;
 };

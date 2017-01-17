@@ -2,19 +2,18 @@ LifeBox.prototype = Object.create(Colectable.prototype);
 LifeBox.prototype.constructor = LifeBox;
 function LifeBox(setup) {
     Colectable.call(this, setup);
-    this.id = setup.id || "LifeBox" + newGuid_short();
-    this.life = setup.life;
+    this.id = setup.id || "LifeBox" + _guid();
+    this.life = 50;
+    this.sfx = 'SFX.EFFECTS.LIFE_BOX';
+    this.anim = 'ANIMATIONS.COLLECTABLES.AMMOBOX';
     this.team = setup.team;
-    this.colide = function (body) {
-        var valid = Colectable.prototype.colide.call(this, body);
-        if (valid) {
-            if (body.maxHealth > body.health) {
-                SoundManager.worldPlay(this.collectSfx, this.position, 1);
-                body.health += this.life;
-                if (body.health > body.maxHealth) body.health = body.maxHealth;
-                console.log('Health raising! collected by ' + body.displayName);
-                this._markToKill = true;
-            }
+    this.collect = function (player) {
+        if (player.maxHealth > player.health) {
+            player.health += this.life;
+            if (player.health > player.maxHealth) body.health = player.maxHealth;
+            this._markToKill = true;
         }
-    }
+    };
+
+
 }

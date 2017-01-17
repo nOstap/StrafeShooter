@@ -1,0 +1,19 @@
+{
+  "name": "Strafe Shooter",
+  "description": "HTML5 p5,socket.io and node based multiplayer game.",
+  "version": "0.0.1",
+  "main": "public/index.html",
+  "window": {
+    "show": true,
+    "frame": false,
+    "toolbar": false,
+    "position": "center",
+    "width": 1024,
+    "height": 768,
+    "min_width": 640,
+    "min_height": 480
+  },
+  "scripts": {
+    "start": "nw ."
+  }
+}

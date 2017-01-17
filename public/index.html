@@ -1,56 +1,23 @@
-<script language="javascript" type="text/javascript" src="classes/Interface.js"></script>
 <html>
 <head>
     <meta charset="UTF-8">
 
-    <script src='shared/lib/Box2D.min.js'></script>
-
-    <script language="javascript" type="text/javascript" src="libraries/socket.io.js"></script>
-
-    <script language="javascript" type="text/javascript" src="libraries/p5.js"></script>
-    <script language="javascript" src="libraries/p5.dom.js"></script>
-    <script language="javascript" src="libraries/p5.sound.js"></script>
-    <!--SHARED-->
-    <script language="javascript" type="text/javascript" src="shared/config.js"></script>
-    <script language="javascript" type="text/javascript" src="shared/utils.js"></script>
-
-    <script language="javascript" type="text/javascript" src="shared/classes/GameEngine.js"></script>
-    <script language="javascript" type="text/javascript" src="shared/classes/PhysicsEngine.js"></script>
-    <script language="javascript" type="text/javascript" src="shared/classes/SoundManager.js"></script>
-
-    <!--CLASSES-->
-    <script language="javascript" type="text/javascript" src="classes/RenderEngine.js"></script>
-    <script language="javascript" type="text/javascript" src="classes/Animation.js"></script>
-    <script language="javascript" type="text/javascript" src="classes/Interface.js"></script>
-    <script language="javascript" type="text/javascript" src="classes/Gui.js"></script>
-    <script language="javascript" type="text/javascript" src="shared/classes/Entity.js"></script>
-    <script language="javascript" type="text/javascript" src="shared/classes/Player.js"></script>
-    <script language="javascript" type="text/javascript" src="shared/classes/Energy.js"></script>
-    <script language="javascript" type="text/javascript" src="shared/classes/Obstacle.js"></script>
-    <!--ITEMS-->
-    <script language="javascript" type="text/javascript" src="shared/classes/items/Colectable.js"></script>
-    <script language="javascript" type="text/javascript" src="shared/classes/items/AmmoBox.js"></script>
-    <script language="javascript" type="text/javascript" src="shared/classes/items/DoubleDamage.js"></script>
-    <script language="javascript" type="text/javascript" src="shared/classes/items/LifeBox.js"></script>
-    <!--WEAPONS-->
-    <script language="javascript" type="text/javascript" src="shared/classes/weapons/Weapon.js"></script>
-    <script language="javascript" type="text/javascript" src="shared/classes/weapons/CurveGun.js"></script>
-    <script language="javascript" type="text/javascript" src="shared/classes/weapons/LightGun.js"></script>
-    <script language="javascript" type="text/javascript" src="shared/classes/weapons/Spas.js"></script>
-    <script language="javascript" type="text/javascript" src="shared/classes/weapons/RocketLuncher.js"></script>
-    <script language="javascript" type="text/javascript" src="shared/classes/weapons/Bow.js"></script>
-    <script language="javascript" type="text/javascript" src="shared/classes/weapons/MachineGun.js"></script>
-
-    <script language="javascript" type="text/javascript" src="client.js"></script>
-
     <link rel="stylesheet" href="assets/styles/loaders.css">
     <link rel="stylesheet" href="assets/styles/main.css">
 
+    <script language="javascript" type="text/javascript" src="libraries/socket.io.js"></script>
+    <script language="javascript" type="text/javascript" src="libraries/p5.js"></script>
+    <script language="javascript" src="libraries/p5.dom.js"></script>
+    <script language="javascript" src="libraries/p5.sound.js"></script>
+
+    <script language="javascript" type="text/javascript" src="shared/lib/Box2D.min.js"></script>
+    <script language="javascript" type="text/javascript" src="shared/config.js"></script>
+    <script language="javascript" type="text/javascript" src="shared/utils.js"></script>
+    <script language="javascript" type="text/javascript" src="classes/Gui.js"></script>
+    <script language="javascript" type="text/javascript" src="client.js"></script>
+
 </head>
 <body>
-<div id="logo">
-    <img src="assets/images/logo.png">
-</div>
 <div id="p5_loading" class="loader">
     <div class="loader-inner ball-scale-multiple">
         <div></div>
@@ -68,17 +35,14 @@
 </div>
 <div id="home" class="center-box hidden">
     <div class="center-box-inner">
-        <div class="center-box-heading">
-            <h2 class="game-font-dark">Strafe Shooter</h2>
-        </div>
         <div class="center-box-content">
 
         </div>
         <div class="center-box-bottom">
             <div class="btn-row">
-                <div id="single-play" class="regular-btn sound-btn game-font-dark disabled">Single</div>
-                <div id="display-games-list" class="regular-btn sound-btn game-font-dark">Server list</div>
-                <div id="display-settings" class="regular-btn sound-btn game-font-dark">Settings</div>
+                <div id="single-play" class="regular-btn gui-btn game-font-dark" inactive="true">Single</div>
+                <div id="display-games-list" class="regular-btn gui-btn game-font-dark">Server list</div>
+                <div id="display-settings" class="regular-btn gui-btn game-font-dark">Settings</div>
             </div>
         </div>
     </div>
@@ -86,7 +50,12 @@
 <div id="settings" class="center-box hidden">
     <div class="center-box-inner">
         <div class="center-box-heading">
-            <h2 class="game-font-dark">Settings</h2>
+            <h2 class="game-font">Settings</h2>
+            <div id="player-preview">
+                <div class="player-element body"></div>
+                <div class="player-element weapon"></div>
+                <div class="player-element head"></div>
+            </div>
         </div>
         <div class="center-box-content">
             <form id="player-setup-form" name="player-setup-form" class="form">
@@ -95,8 +64,27 @@
                     <input type="text" required name="player_name" value="NoNamePlayer" id="player-name">
                 </div>
                 <div class="input-container">
+                    <label for="player-head">Head</label>
+                    <select id="player-head" name="player_head" change="head">
+                        <option value="0" selected>None</option>
+                        <option value="1">Helmet</option>
+                        <option value="2">Shawl</option>
+                    </select>
+                </div>
+                <div class="input-container">
+                    <label for="player-body">Body</label>
+                    <select id="player-body" name="player_body" change="body">
+                        <option value="0" selected>Blue with flag</option>
+                        <option value="1" selected>Soldier green</option>
+                    </select>
+                </div>
+                <div class="input-container">
                     <label for="mute-sound">Mute sound</label>
                     <input type="checkbox" id="mute-sound" name="mute_sound">
+                </div>
+                <div class="input-container">
+                    <label for="mute-sound-effects">Mute sound effects</label>
+                    <input type="checkbox" id="mute-sound-effects" name="mute_sound_effects">
                 </div>
                 <div class="input-container">
                     <label for="full-screen">Full secreen</label>
@@ -106,8 +94,8 @@
         </div>
         <div class="center-box-bottom">
             <div class="btn-row">
-                <div id="save-settings" class="regular-btn sound-btn game-font-dark">Save</div>
-                <div class="regular-btn game-font-dark back sound-btn">Back</div>
+                <div id="save-settings" class="regular-btn gui-btn game-font-dark">Save</div>
+                <div class="regular-btn game-font-dark back gui-btn">Back</div>
             </div>
         </div>
     </div>
@@ -115,7 +103,7 @@
 <div id="games-list" class="center-box hidden">
     <div class="center-box-inner">
         <div class="center-box-heading">
-            <h2 class="game-font-dark">Server list</h2>
+            <h2 class="game-font">Server list</h2>
         </div>
         <div class="center-box-subheading">
             <span>Nazawa hosta</span><span>Status</span><span>Gracze ARE/MAX</span>
@@ -126,10 +114,10 @@
         </div>
         <div class="center-box-bottom">
             <div class="btn-row">
-                <div id="join-game" class="regular-btn sound-btn game-font-dark disabled">Join</div>
-                <div id="start-new" class="regular-btn sound-btn game-font-dark">Start new</div>
-                <div id="refresh-list" class="regular-btn sound-btn game-font-dark">Refresh list</div>
-                <div class="regular-btn game-font-dark back sound-btn">Back</div>
+                <div id="join-game" class="regular-btn gui-btn game-font-dark " inactive="true">Join</div>
+                <div id="start-new" class="regular-btn gui-btn game-font-dark">Start new</div>
+                <div id="refresh-list" class="regular-btn gui-btn game-font-dark">Refresh list</div>
+                <div class="regular-btn game-font-dark back gui-btn">Back</div>
             </div>
         </div>
     </div>
@@ -137,7 +125,7 @@
 <div id="start-new-game" class="center-box hidden">
     <div class="center-box-inner">
         <div class="center-box-heading">
-            <h2 class="game-font-dark">Start new game</h2>
+            <h2 class="game-font">Start new game</h2>
         </div>
         <div class="center-box-content">
             <form id="create-game-form" name="create_game_form" class="form">
@@ -159,12 +147,15 @@
                     <label for="game-mode">Game mode</label>
                     <select id="game-mode" required name="game_mode">
                         <option selected="true" value="0">FFA</option>
+                        <option disabled value="1">TEAMS</option>
+                        <option disabled value="2">THEHUNTED</option>
+
                     </select>
                 </div>
-                <div class="input-container disabled">
+                <div class="input-container">
                     <label for="game-map">Map</label>
                     <select id="game-map" required name="game_map">
-                        <option value="0">Random</option>
+                        <option value="0">Test map</option>
                     </select>
                 </div>
                 <div class="input-container">
@@ -181,6 +172,7 @@
                     <label for="game-round-time">Round time</label>
                     <select id="game-round-time" required name="game_round_time">
                         <option value="1">1min</option>
+                        <option value="3">3min</option>
                         <option value="5">5min</option>
                         <option value="10">10min</option>
                         <option value="15">15min</option>
@@ -190,8 +182,8 @@
         </div>
         <div class="center-box-bottom">
             <div class="btn-row">
-                <div id="create-game" class="regular-btn sound-btn game-font-dark ">Create</div>
-                <div class="regular-btn game-font-dark back sound-btn">Back</div>
+                <div id="create-game" class="regular-btn gui-btn game-font-dark ">Create</div>
+                <div class="regular-btn game-font-dark back gui-btn">Back</div>
             </div>
         </div>
     </div>
@@ -199,22 +191,22 @@
 <div id="connection-error" class="center-box hidden">
     <div class="center-box-inner">
         <div class="center-box-heading">
-            <h2 class="game-font-dark">Connection error</h2>
+            <h2 class="game-font">Connection error</h2>
         </div>
         <div class="center-box-content">
 
         </div>
         <div class="center-box-bottom">
             <div class="btn-row">
-                <div class="regular-btn game-font-dark back sound-btn">Back</div>
+                <div class="regular-btn game-font-dark back gui-btn">Back</div>
             </div>
         </div>
     </div>
 </div>
-<div id="pause" class="center-box hidden">
+<div id="pause" class="center-box hidden  transparent">
     <div class="center-box-inner">
         <div class="center-box-heading">
-            <h2 class="game-font-dark">Pause</h2>
+            <h2 class="game-font">Pause</h2>
         </div>
         <div class="center-box-subheading">
             <span>Nazwa gracza</span><span>Kills/Deaths</span><span>ARE IN</span>
@@ -234,10 +226,10 @@
         </div>
     </div>
 </div>
-<div id="spectate" class="center-box hidden">
+<div id="spectate" class="center-box hidden  transparent">
     <div class="center-box-inner">
         <div class="center-box-heading">
-            <h2 class="game-font-dark">You'r spectator on <span id="game-name-header"></span></h2>
+            <h2 class="game-font">You'r spectator on <span id="game-name-header"></span></h2>
         </div>
         <div class="center-box-subheading">
             <span>Nazwa gracza</span><span>Kills/Deaths</span><span>ARE IN</span>
@@ -252,8 +244,8 @@
         </div>
         <div class="center-box-bottom">
             <div class="btn-row">
-                <div id="join-match" class="regular-btn sound-btn game-font-dark">Join match!</div>
-                <div id="leave-game" class="regular-btn sound-btn game-font-dark right">Leave</div>
+                <div id="join-match" class="regular-btn gui-btn game-font-dark">Join match!</div>
+                <div id="leave-game" class="regular-btn gui-btn game-font-dark right">Leave</div>
             </div>
         </div>
     </div>

@@ -2,13 +2,13 @@ Spas.prototype = Object.create(Weapon.prototype);
 Spas.prototype.constructor = Spas;
 function Spas(player) {
     Weapon.call(this, player);
-    this.name = "Spas";
     this.ammoType = "SpasBullet";
     this.ammunition = 20;
     this.bullets = 7;
     this.dispersion = 0.06;
     this.distance = 800;
     this.delay = 800;
+    this.anim = 'ANIMATIONS.WEAPONS.SPAS';
     this.sfx = {
         fire: 'SFX.WEAPONS.SPAS.FIRE',
         start: 'SFX.WEAPONS.SPAS.START',
@@ -23,18 +23,12 @@ SpasBullet.prototype = Object.create(Bullet.prototype);
 SpasBullet.prototype.constructor = SpasBullet;
 function SpasBullet(weapon) {
     Bullet.call(this, weapon);
-    this.speed = 15;
-    this.radius = 0.05;
+    this.speed = 4;
+    this.radius = 0.03;
     this.damping = 1.5;
     this.damage = 2;
     this.persistence = 1;
-    this.restitution = 0.2;
-    if(!IS_SERVER)
-    this.anim = {
-        fly: new Animation({
-            frames: [
-                SPR_OBJ.frames.spas_bullet
-            ]
-        })
-    }
+    this.friction = 1;
+    this.restitution = 0.1;
+    this.anim = 'ANIMATIONS.BULLETS.SPASBULLET';
 }

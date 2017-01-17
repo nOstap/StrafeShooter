@@ -2,12 +2,12 @@ MachineGun.prototype = Object.create(Weapon.prototype);
 MachineGun.prototype.constructor = MachineGun;
 function MachineGun(player) {
     Weapon.call(this, player);
-    this.id = "MachineGun"+newGuid_short();
+    this.id = "MachineGun" + _guid();
     this.ammoType = "RegularBullet";
     this.ammunition = 200;
     this.dispersion = 0.06;
-    this.distance = 1600;
-    this.delay = 70;
+    this.distance = 1000;
+    this.delay = 80;
     this.sfx = {
         fire: 'SFX.WEAPONS.MACHINEGUN.FIRE',
         start: 'SFX.WEAPONS.MACHINEGUN.START',
@@ -16,30 +16,18 @@ function MachineGun(player) {
         hit: null,
         idle: null
     };
-    if (!IS_SERVER)
-        this.anim = {
-            idle: new Animation({
-                frames: [
-                    SPR_OBJ.frames.machine_gun_idle
-                ]
-            }),
-            fire: new Animation({
-                frames: [
-                    SPR_OBJ.frames.machine_gun_0,
-                    SPR_OBJ.frames.machine_gun_1
-                ]
-            })
-        };
+    this.anim = 'ANIMATIONS.WEAPONS.MACHINEGUN';
 }
 
 RegularBullet.prototype = Object.create(Bullet.prototype);
 RegularBullet.prototype.constructor = RegularBullet;
 function RegularBullet(weapon) {
     Bullet.call(this, weapon);
-    this.id = "RegularBullet"+newGuid_short();
+    this.id = "RegularBullet" + _guid();
     this.speed = 5;
     this.radius = 0.02;
     this.damping = 2;
+    this.persistence = 0.5;
     this.restitution = 0.5;
     this.damage = 1;
 }

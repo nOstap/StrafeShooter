@@ -2,19 +2,21 @@ Colectable.prototype = Object.create(Entity.prototype);
 Colectable.prototype.constructor = Colectable;
 function Colectable(setup) {
     Entity.call(this);
-    this.id = setup.id || "Collectable" + newGuid_short();
+    this.id = setup.id || "Collectable" + _guid();
     this.zIndex = 1;
     this.position = setup.position;
     this.angle = setup.angle || 0;
-    this.collectSfx = 'SFX.EFFECTS.COLLECT';
+    this.sfx = 'SFX.EFFECTS.COLLECT';
+    this.anim = 'ANIMATIONS.COLLECTABLES.AMMOBOX';
     this.team = setup.team;
-    this.lifetime = setup.lifetime || 60;
-    this.halfHeight = 0.5;
-    this.halfWidth = 0.5;
+    this.lifetime = null;
+    this.halfHeight = 0.25;
+    this.halfWidth = 0.25;
 }
 Colectable.prototype._simply = function () {
     return {
         id: this.id,
+        class: this.class,
         position: this.position,
         lastPosition: this.lastPosition,
         weapon: this.weapon,
@@ -38,7 +40,7 @@ Colectable.prototype.setup = function (engine) {
         restitution: 0.1,
         categoryBits: CFG.COLLISION_GROUPS.ITEM,
         maskBits: CFG.COLLISION_GROUPS.ALL,
-        damping: 100,
+        damping: 10,
         userData: {
             id: this.id,
             elementType: CFG.COLLISION_GROUPS.ITEM
@@ -55,10 +57,13 @@ Colectable.prototype.update = function () {
         this.position = this.physBody.GetPosition();
     }
 };
+Colectable.prototype.draw = function () {
+    Animation.animate(this.anim, null, this.position.x*SCALE, this.position.y*SCALE, this.angle);
+};
+Colectable.prototype.collect = function () {
+};
 Colectable.prototype.colide = function (body) {
-    if(!body.physBody) return false;
-    if (body.isPlayer && !body.isDead) {
-        return (body.team == this.team || body.team == null);
-    } else return false;
-
+    if (!body.physBody || !body.isPlayer || body.isDead) return;
+    if (body.team == this.team || body.team == null)
+    this.engine.collectItem(body.id, this.id);
 };

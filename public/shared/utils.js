@@ -2,32 +2,7 @@ const HALF_PI = Math.PI * 0.5;
 const QUATER_PI = Math.PI * 0.25;
 const TWO_PI = Math.PI * 2;
 const PI = Math.PI;
-
-next = function (db, key) {
-    var keys = Object.keys(db)
-        , i = keys.indexOf(key);
-    return i !== -1 && keys[i + 1] && db[keys[i + 1]];
-};
-newGuid_short = function () {
-    //TODO: REFRACTOR UGLY NAME OF F()
-    var S4 = function () {
-        return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
-    };
-    return (S4()).toString();
-};
-_profile = function (f) {
-    var start = Date.now();
-    var out = f();
-    console.log('Operation take ' + start - Date.now() + 'ms.');
-    return out;
-};
-_earse = function (array, item) {
-    index = array.indexOf(item);
-    array.splice(index, 1);
-    item = null;
-    return true;
-};
-var srcore = {
+const srcore = {
     seeded: false,
     m: 4294967296,
     a: 1664525,
@@ -46,7 +21,38 @@ var srcore = {
         return srcore.z / srcore.m;
     }
 };
-function super_random(min, max) {
+
+_addJsContent = function (fileContent) {
+    var elm = document.createElement('script');
+    elm.innerHTML = fileContent;
+    if (typeof elm !== 'undefined') {
+        document.head.appendChild(elm);
+    }
+};
+_next = function (db, key) {
+    var keys = Object.keys(db)
+        , i = keys.indexOf(key);
+    return i !== -1 && keys[i + 1] && db[keys[i + 1]];
+};
+_guid = function () {
+    var S4 = function () {
+        return (((1 + Math.random()) * 0x1000000) | 0).toString(16).substring(1);
+    };
+    return (S4()).toString();
+};
+_profile = function (f) {
+    var start = Date.now();
+    var out = f();
+    console.log('Operation take ' + start - Date.now() + 'ms.');
+    return out;
+};
+_earse = function (array, item) {
+    index = array.indexOf(item);
+    array.splice(index, 1);
+    item = null;
+    return true;
+};
+_superRandom = function (min, max) {
     this.rand = null;
     if (srcore.seeded) {
         this.rand = srcore.rands();
@@ -70,7 +76,7 @@ function super_random(min, max) {
 
         return this.rand * (max - min) + min;
     }
-}
+};
 _gameStatsCreate = function (game) {
     var stats = {
         id: game.id,
@@ -86,7 +92,7 @@ _gameStatsCreate = function (game) {
 _getVal = function (f, callback) {
     return typeof f == 'function' ? f(callback) : f;
 };
-sortByKey = function (array, key, direction) {
+_sortByKey = function (array, key, direction) {
 //TODO: direction ASC/DESC
     var tmpArray = [], indexObject = {};
     for (var i = 0; i < array.length; i++) {
@@ -99,34 +105,26 @@ sortByKey = function (array, key, direction) {
     }
     return tmpArray;
 };
-findByKey = function (array, key, value) {
-    var out = [];
+_findByKey = function (array, key, value, forceArrayOut) {
+    var out = [], tmp;
+    key = key.split(".");
     for (var i = 0; i < array.length; i++) {
-        if (array[i])
-            if (array[i][key] == value) out.push(array[i]);
+        tmp = array[i];
+        if (tmp)
+            for (var x = 0; x < key.length; x++) {
+                if (typeof tmp == 'undefined') break;
+                tmp = tmp[key[x]];
+            }
+        if (tmp == value) out.push(array[i]);
     }
-    if (out.length > 1) return out;
+    if (out.length > 1 || forceArrayOut) return out;
     else return out[0];
 };
-Vec2.Rotate = function (vec, rad) {
-    var c = Math.cos(rad);
-    var s = Math.sin(rad);
-    if (!vec) return new Vec2(c, s);
-    return new Vec2(c * vec.x - s * vec.y, s * vec.x + c * vec.y);
-};
-Vec2.prototype.Rotate = function (rad) {
-    var c = Math.cos(rad);
-    var s = Math.sin(rad);
-    var x = c * this.x - s * this.y;
-    var y = s * this.x + c * this.y;
-    this.x = x;
-    this.y = y;
-    return this;
-};
-
-_setupSocket = function () {
-    SOCKET = io.connect('http://' + gui.selected_server.host.host + ':' + gui.selected_server.host.port + '/game', {
-        query: 'displayName=' + gui.game_settings.player_name
+_setupSocket = function (server) {
+    SOCKET = io.connect('http://' + server.host.host + ':' + server.host.port + '/game', {
+        query: 'displayName=' + gui.game_settings.player_name +
+        '&body=' + gui.game_settings.player_body +
+        '&head=' + gui.game_settings.player_head
     });
     SOCKET.on('connected', function (data) {
         console.log('You\'r connected to game ' + data.id);
@@ -155,9 +153,9 @@ _setupSocket = function () {
         gameEngine.joinMatch(player_info.id, player_info);
         gui.setPlayerList(gameEngine);
     });
-    SOCKET.on('spawn_buffer', function (data) {
+    SOCKET.on('spawn_defer', function (data) {
         console.log('Spawn arrived!');
-        gameEngine._spawnBuffer = data;
+        gameEngine._spawnDefer = data;
     });
     SOCKET.on('input_update', function (data) {
         gameEngine.applyPlayerInput(data.playerID, data.input, data.time);
@@ -173,4 +171,26 @@ _setupSocket = function () {
         if (gameEngine) gameEngine.halt();
         gui.show('CONNECTION_ERROR');
     });
+};
+
+String.prototype.toSkeleton = function () {
+    var skeleton = this.replace(/([A-Z])/g, function ($1) {
+        return "_" + $1.toLowerCase();
+    });
+    return skeleton.slice(1, skeleton.length);
+};
+Vec2.Rotate = function (vec, rad) {
+    var c = Math.cos(rad);
+    var s = Math.sin(rad);
+    if (!vec) return new Vec2(c, s);
+    return new Vec2(c * vec.x - s * vec.y, s * vec.x + c * vec.y);
+};
+Vec2.prototype.Rotate = function (rad) {
+    var c = Math.cos(rad);
+    var s = Math.sin(rad);
+    var x = c * this.x - s * this.y;
+    var y = s * this.x + c * this.y;
+    this.x = x;
+    this.y = y;
+    return this;
 };

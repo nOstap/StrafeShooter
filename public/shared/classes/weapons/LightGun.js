@@ -2,26 +2,13 @@ LightGun.prototype = Object.create(Weapon.prototype);
 LightGun.prototype.constructor = LightGun;
 function LightGun(player) {
     Weapon.call(this, player);
-    this.id = "LightGun" + newGuid_short();
+    this.id = "LightGun" + _guid();
     this.ammoType = "Light";
     this.ammunition = 500;
     this.sfxMode = 1;
     this.distance = 300;
-    this.delay = 0.0;
-    if (!IS_SERVER)
-        this.anim = {
-        idle: new Animation({
-            frames: [
-                SPR_OBJ.frames.light_gun_idle
-            ]
-        }),
-        fire: new Animation({
-            frames: [
-                SPR_OBJ.frames.light_gun_0,
-                SPR_OBJ.frames.light_gun_1
-            ]
-        })
-    };
+    this.delay = 25;
+    this.anim = 'ANIMATIONS.WEAPONS.LIGHTGUN';
     this.sfx = {
         fire: 'SFX.WEAPONS.LIGHTGUN.FIRE',
         start: 'SFX.WEAPONS.LIGHTGUN.START',
@@ -36,7 +23,7 @@ Light.prototype = Object.create(Bullet.prototype);
 Light.prototype.constructor = Light;
 function Light(weapon) {
     Bullet.call(this, weapon);
-    this.id = "Light" + newGuid_short();
+    this.id = "Light" + _guid();
     this.speed = 30;
     this.radius = 0.02;
     this.density = 10;

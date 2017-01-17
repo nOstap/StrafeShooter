@@ -5,15 +5,7 @@ function Gui() {
     if (!this.game_settings)
         this.game_settings = JSON.parse(CFG.INIT_GAME_SETTINGS);
     var backs = selectAll('.back');
-    var soundBtns = selectAll('.sound-btn');
-    for (var i = 0 ; i < soundBtns.length; i++) {
-        soundBtns[i].mousePressed(function () {
-            SoundManager.play('SFX.INTERFACE.BUTTON_CLICK');
-        });
-        soundBtns[i].mouseOver(function () {
-            SoundManager.play('SFX.INTERFACE.BUTTON_HOVER');
-        });
-    }
+    var guiBtns = selectAll('.gui-btn');
     for (var i = 0; i < backs.length; i++) {
         backs[i].mousePressed(function () {
             gui.back();
@@ -44,7 +36,37 @@ function Gui() {
             }
         }
     }
+
+    for (var i = 0; i < guiBtns.length; i++) {
+        guiBtns[i].mousePressed(function (e) {
+            if(this.attribute('inactive')) e.preventDefault();
+            SoundManager.play('SFX.INTERFACE.BUTTON_CLICK');
+        });
+        guiBtns[i].mouseOver(function () {
+            SoundManager.play('SFX.INTERFACE.BUTTON_HOVER');
+        });
+    }
+
+    this.updatePreview('weapon', 'rocket_idle', true);
+    this.updatePreview('body', this.game_settings.player_body);
+    this.updatePreview('head', this.game_settings.player_head);
+    select('#player-body').changed(this.updatePreview);
+    select('#player-head').changed(this.updatePreview);
+
 }
+Gui.prototype.updatePreview = function (element, value, forceName) {
+    var pPreview = select('#player-preview'),
+        head = select('.head', pPreview),
+        weapon = select('.weapon', pPreview),
+        body = select('.body', pPreview),
+        element = typeof value !== 'undefined' ? element : this.attribute('change'),
+        elm = eval(element),
+        value = typeof value !== 'undefined' ? value : this.value(),
+        obj = SPRITES_JSON.frames[forceName ? value : element + '_' + value],
+        x = obj.frame.x * -1,
+        y = obj.frame.y * -1;
+    elm.style("background-position", x + "px " + y + "px");
+};
 Gui.prototype.createGame = function () {
     gui.showLoader();
     var data = {};
@@ -55,25 +77,19 @@ Gui.prototype.createGame = function () {
     }
     data.displayName = this.game_settings.player_name;
     httpGet('/local-server', data, 'json', function (res) {
-        this.selected_server = {
+        if (res) _setupSocket({
             host: HOST_LIST[0]
-        }
-        if (res) _setupSocket();
+        });
     });
 };
 Gui.prototype.joinGame = function () {
     gui.showLoader();
-    _setupSocket();
+    _setupSocket(this.selected_server);
 };
 Gui.prototype.joinMatch = function () {
     gui.hide();
     interface.create();
-    interface.showCounter(CFG.PLAYER.SPAWN_TIME);
     SOCKET.emit('match_join', gameEngine.id);
-};
-Gui.prototype.setLoadingInfo = function (string) {
-    var info = select('#loading-info');
-    if (info) info.html(string);
 };
 Gui.prototype.applySettings = function () {
     for (var i = 0; i < GAME_STATES.SETTINGS.form.length; i++) {
@@ -84,10 +100,7 @@ Gui.prototype.applySettings = function () {
             input.elt.value = this.game_settings[input.attribute('name')];
         }
     }
-    if (gui && gui.game_settings.full_screen)
-        fullscreen(true);
-    else
-        fullscreen(false);
+    Animation.load();
 };
 Gui.prototype.showServerList = function () {
     this.hide('HOME');
@@ -128,7 +141,7 @@ Gui.prototype.setPlayerList = function (game) {
     uls_1.html('');
     for (var p in game.players) {
         var player = game.players[p];
-        var list_item = createElement('li', '<span>' + player.displayName + '</span><span>' + player.kpr + '/' + player.dpr + '</span><span>PLAYER</span>');
+        var list_item = createElement('li', '<span>' + player.displayName + '</span><span>' + player.killsPerMatch + '/' + player.deathsPerMatch + '</span><span>PLAYER</span>');
         list_item.addClass('list-item');
         ulp_0.child(list_item)
         ulp_1.child(list_item);
@@ -174,8 +187,8 @@ Gui.prototype.setServerList = function (list) {
             this.addClass('selected');
             gui.selected_server = this.parent;
             var btn = select('#join-game');
-            if (this.parent.host.online) btn.removeClass('disabled');
-            else btn.addClass('disabled');
+            if (this.parent.host.online) btn.attribute('inactive', false);
+            else btn.attribute('inactive', true);
         });
         server.elm.addClass('list-item');
         ul.child(server.elm);
@@ -191,6 +204,10 @@ Gui.prototype.show = function (s) {
     this.active_state = s;
     var state = GAME_STATES[s];
     select(state.id).removeClass('hidden');
+    if (gui && gui.game_settings.full_screen)
+        fullscreen(true);
+    else
+        fullscreen(false);
 };
 Gui.prototype.back = function () {
     var state = GAME_STATES[this.active_state];
@@ -206,4 +223,8 @@ Gui.prototype.hide = function (s) {
     var state = GAME_STATES[s];
     var elm = select(state.id);
     select(state.id).addClass('hidden');
+};
+Gui.setLoadingInfo = function (string) {
+    var info = select('#loading-info');
+    if (info) info.html(string);
 };

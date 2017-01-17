@@ -2,7 +2,7 @@ Obstacle.prototype = Object.create(Entity.prototype);
 Obstacle.prototype.constructor = Obstacle;
 function Obstacle(setup) {
     Entity.call(this);
-    this.id = setup.id || "Obstacle" + newGuid_short();
+    this.id = setup.id || "Obstacle" + _guid();
     this.physBody = null;
     this.type = setup.type;
     this.zIndex = setup.zIndex || 0;
@@ -15,6 +15,7 @@ function Obstacle(setup) {
     this.halfHeight = setup.halfHeight;
     this.halfWidth = setup.halfWidth;
     this.categoryBits = setup.categoryBits || null;
+    this.maskBits = setup.maskBits || CFG.COLLISION_GROUPS.ALL;
 }
 
 Obstacle.prototype.setup = function (engine) {
@@ -31,13 +32,13 @@ Obstacle.prototype.setup = function (engine) {
         damping: 2,
         density: 10,
         friction: 0.5,
-        maskBits: CFG.COLLISION_GROUPS.ALL ^ CFG.COLLISION_GROUPS.BULLET,
+        maskBits: this.maskBits,
         categoryBits: this.categoryBits || CFG.COLLISION_GROUPS.WALL
     }
     this.physBody = physicsEngine.addBody(entityDef);
     this.physBody.SetUserData({
         id: this.id,
-        elementType: CFG.COLLISION_GROUPS.WALL
+        elementType: this.categoryBits
     });
     this.physBody.SetLinearVelocity(new Vec2(0.0, 0.0));
 };

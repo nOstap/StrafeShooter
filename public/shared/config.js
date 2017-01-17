@@ -28,7 +28,15 @@ const CFG = {
         16: 'SWITCH_BOW',
         67: 'SWITCH_SPAS',
         17: 'SWITCH_MACHINE',
-        51: 'PAUSE'
+        49: 'TEAM_CHAT',
+        50: 'NORMAL_CHAT',
+        51: 'READY',
+        52: 'PAUSE'
+    },
+    GAME_MODES: {
+        FFA: 0,
+        TEAMS: 1,
+        THEHUNTED: 2
     },
     COLLISION_GROUPS: {
         NOTHING: 0x0000,
@@ -40,9 +48,17 @@ const CFG = {
         WATER: 0x0001 << 5,
         ITEM: 0x0001 << 6,
         BULLET: 0x0001 << 7,
+        OBSTACLE: 0x0001 << 8,
         ALL: 0xFFFF
     },
-    INIT_GAME_SETTINGS: '{"player_name":"NoNamePlayer","mute_sound":false,"full_screen":false}',
+    INIT_GAME_SETTINGS: '{' +
+    '"player_name":"NoNamePlayer",' +
+    '"mute_sound":false,' +
+    '"mute_sound_effects":false,' +
+    '"player_head":0,' +
+    '"player_body":0,' +
+    '"full_screen":false' +
+    '}',
     PLAYER: {
         ACCELERATION: 18,
         MAX_HEALTH: 100,
@@ -68,18 +84,23 @@ const CFG = {
     TILE_WIDTH: 100,
     TILE_HEIGHT: 100
 };
+
 INPUT = {};
 SFX = {};
 STRINGS = [];
-SOCKET = {};
-CAMERA_CENTER = {x:0, y:0};
+SOCKET = null;
+CAMERA_CENTER = {x: 0, y: 0};
+CAMERA_POS = {x: CFG.MAP_WIDTH * .5, y: CFG.MAP_HEIGHT * .5};
 FONT = null;
 MAPS = [
     'test_map'
 ];
-SPR_OBJ = {};
 HOST_LIST = [];
+SPRITES_JSON = {};
+INTERFACE_SPRITES_JSON = {};
 SPRITE_SHEET = {};
+INTERFACE_SPRITE_SHEET = {};
+ANIMATIONS = {};
 
 
 Vec2 = Box2D.Common.Math.b2Vec2;

@@ -1,9 +1,8 @@
-
 function PhysicsEngine() {
     this.debugDraw = new DebugDraw;
     this.world = new World(new Vec2(0, 0), true);
     this.setup = function () {
-        if(!IS_SERVER) {
+        if (!IS_SERVER) {
             var context = canvas.getContext("2d");
             this.debugDraw.SetSprite(context);
             this.debugDraw.SetDrawScale(SCALE);
@@ -67,17 +66,27 @@ function PhysicsEngine() {
         if (entityDef.radius) {
             fixtureDefinition.shape = new CircleShape(entityDef.radius);
             body.CreateFixture(fixtureDefinition);
-        } else if (entityDef.polygon) {
-            var polygon = entityDef.polygon;
+        } else if (entityDef.polygons) {
+            var polygons = entityDef.polygons;
             var vecs = [];
-            for (var i = 0; i < polygon.length; i++) {
-                var vec = new Vec2();
-                vec.Set(polygon[i].x, polygon[i].y);
-                vecs[i] = vec;
+            for (var j = 0; j < polygons.length; j++) {
+                var pDef = polygons[j];
+                if(pDef.filter) {
+                    fixtureDefinition.filter.categoryBits = pDef.filter.categoryBits;
+                    fixtureDefinition.filter.maskBits = pDef.filter.maskBits;
+                } else {
+                    fixtureDefinition.filter.categoryBits = entityDef.categoryBits || CFG.COLLISION_GROUPS.NOTHING;
+                    fixtureDefinition.filter.maskBits = entityDef.maskBits || CFG.COLLISION_GROUPS.ALL;
+                }
+                for (var i = 0; i < pDef.polygon.length; i++) {
+                    var vec = new Vec2();
+                    vec.Set(pDef.polygon[i].x, pDef.polygon[i].y);
+                    vecs[i] = vec;
+                }
+                fixtureDefinition.shape = new PolygonShape;
+                fixtureDefinition.shape.SetAsArray(vecs, vecs.length);
+                body.CreateFixture(fixtureDefinition);
             }
-            fixtureDefinition.shape = new PolygonShape;
-            fixtureDefinition.shape.SetAsArray(vecs, vecs.length);
-            body.CreateFixture(fixtureDefinition);
         }
         else {
             fixtureDefinition.shape = new PolygonShape;

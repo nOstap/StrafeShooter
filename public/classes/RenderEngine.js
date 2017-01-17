@@ -1,10 +1,13 @@
 function RenderEngine() {
     this.buffered_animations = [];
     this.tileSet = {};
-    this.mapLayers = [];
+    this.bottomLayers = [];
+    this.topLayers = [];
 }
 RenderEngine.prototype.setup = function () {
-    this.mapLayers = findByKey(gameEngine.map.layers, 'type', 'tilelayer');
+
+    this.bottomLayers = _findByKey(gameEngine.map.layers, 'properties.zIndex', 0);
+    this.topLayers = _findByKey(gameEngine.map.layers, 'properties.zIndex', 1, true);
     var tileset = gameEngine.map.tilesets[0];
     var columns = Math.floor(tileset.imagewidth / CFG.TILE_WIDTH);
     var rows = Math.floor(tileset.imageheight / CFG.TILE_HEIGHT);
@@ -19,7 +22,8 @@ RenderEngine.prototype.setup = function () {
         if (!tile) continue;
         if (!tile.animation) continue;
         var frames = [];
-        for (var i = 0; i < tile.animation.length; i++) {
+        var al = tile.animation.length;
+        for (var i = 0; i < al; i++) {
             var rt = this.tileSet[tile.animation[i].tileid];
             frames.push({
                 frame: {
@@ -39,51 +43,51 @@ RenderEngine.prototype.setup = function () {
     }
 
 };
+RenderEngine.prototype.renderLayer = function (layer) {
+    var xd, yd, x, y;
+    x = y = xd = yd = 0, ldl = layer.data.length;
+    for (var idx = 0; idx < ldl; idx++) {
+        var tileId = layer.data[idx];
+        if (!tileId) continue;
+
+        x = Math.floor(idx % CFG.MAP_WIDTH);
+        y = Math.floor(idx / CFG.MAP_WIDTH);
+
+        xd = x * CFG.TILE_WIDTH;
+        yd = y * CFG.TILE_HEIGHT;
+        if (xd > -CAMERA_POS.x + (width) ||
+            xd < -CAMERA_POS.x - (width) ||
+            yd > -CAMERA_POS.y + (height) ||
+            yd < -CAMERA_POS.y - (height)) continue;
+
+        var tile = this.tileSet[tileId - 1];
+        if (tile.animation) {
+            tile.animation.animate(xd, yd);
+        } else {
+            image(
+                MAP_SPRITE_SHEET,
+                tile.x + CFG.MAP_MARGIN + CFG.MAP_TEARING_X,
+                tile.y + CFG.MAP_MARGIN + CFG.MAP_TEARING_X,
+                CFG.TILE_WIDTH + CFG.MAP_TEARING_Y,
+                CFG.TILE_HEIGHT + CFG.MAP_TEARING_Y,
+                xd,
+                yd,
+                CFG.TILE_WIDTH,
+                CFG.TILE_HEIGHT
+            );
+        }
+    }
+};
 RenderEngine.prototype.render = function (entities, drawDebug) {
     translate(CAMERA_POS.x, CAMERA_POS.y);
     clear();
-    background(10);
+    background('#339eff');
 
-    var xd, yd, x, y;
-
-    for (var i = 0; i < this.mapLayers.length; i++) {
-
-        x = y = xd = yd = 0;
-
-        for (var idx = 0; idx < this.mapLayers[i].data.length; idx++) {
-            var tileId = this.mapLayers[i].data[idx];
-            if (!tileId) continue;
-
-            x = Math.floor(idx % CFG.MAP_WIDTH);
-            y = Math.floor(idx / CFG.MAP_WIDTH);
-
-            xd = x * CFG.TILE_WIDTH;
-            yd = y * CFG.TILE_HEIGHT;
-            if (xd > -CAMERA_POS.x + (width) ||
-                xd < -CAMERA_POS.x - (width) ||
-                yd > -CAMERA_POS.y + (height) ||
-                yd < -CAMERA_POS.y - (height)) continue;
-
-            var tile = this.tileSet[tileId - 1];
-            if (tile.animation) {
-                tile.animation.animate(xd, yd);
-            } else {
-                image(
-                    MAP_SPRITE_SHEET,
-                    tile.x + CFG.MAP_MARGIN + CFG.MAP_TEARING_X,
-                    tile.y + CFG.MAP_MARGIN + CFG.MAP_TEARING_X,
-                    CFG.TILE_WIDTH + CFG.MAP_TEARING_Y,
-                    CFG.TILE_HEIGHT + CFG.MAP_TEARING_Y,
-                    xd,
-                    yd,
-                    CFG.TILE_WIDTH,
-                    CFG.TILE_HEIGHT
-                );
-            }
-        }
-
+    for (var i = 0; i < this.bottomLayers.length; i++) {
+        this.renderLayer(this.bottomLayers[i]);
     }
-    var sortedEnt = sortByKey(entities, 'zIndex');
+
+    var sortedEnt = _sortByKey(entities, 'zIndex');
     for (var i = 0; i < sortedEnt.length; i++) {
         if (sortedEnt[i].x * SCALE > -CAMERA_POS.x + (width) ||
             sortedEnt[i].y * SCALE < -CAMERA_POS.x - (width) ||
@@ -92,18 +96,21 @@ RenderEngine.prototype.render = function (entities, drawDebug) {
 
         sortedEnt[i].draw();
     }
-    sortedEnt = [];
-    for (var i = 0; i < this.buffered_animations.length; i++) {
+    sortedEnt = null;
+    var bal = this.buffered_animations.length;
+    for (var i = 0; i < bal; i++) {
         var ani = this.buffered_animations[i];
         if (ani.maxLoops && ani.maxLoops <= ani.currentLoop) {
-            this.buffered_animations.splice(this.buffered_animations.indexOf(ani), 1);
+            _earse(this.buffered_animations,ani);
             continue;
         }
         ani.animate();
     }
 
+    for (var i = 0; i < this.topLayers.length; i++) {
+        this.renderLayer(this.topLayers[i]);
+    }
     interface.draw();
-
     if (drawDebug) physicsEngine.world.DrawDebugData();
 };
 RenderEngine.prototype.addAnimation = function (anim) {
