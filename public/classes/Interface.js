@@ -4,15 +4,20 @@ function Interface() {
     this.state = 0;
 }
 
-Interface.prototype.showCounter = function (time) {
+Interface.prototype.showCounter = function (time, topMsg, endMsg) {
+    if (topMsg)
+        this.addElement(new TextElement({
+            fontSize: 30,
+            position: {x: .5, y: .4},
+            text: topMsg,
+            lifetime: time
+        }));
     this.addElement(new TextElement({
-        vAlign: CENTER,
-        hAlign: CENTER,
         text: function (elm) {
             var val = (time / 1000) - Math.floor((Date.now() - elm.createdAt) / 1000);
             if (val <= 0) {
                 SoundManager.play('SFX.EFFECTS.PLAY', 1);
-                val = 'Start!';
+                val = endMsg || 'Start!';
             } else SoundManager.play('SFX.EFFECTS.COUNTER', 1);
             return val;
         },
@@ -26,8 +31,8 @@ Interface.prototype.notification = function (msg, lifetime) {
         hAlign: CENTER,
         text: msg,
         fontSize: 20,
-        box: [0,0, 300, 500],
-        position: {x:.92, y:.07}
+        box: [0, 0, 300, 500],
+        position: {x: .92, y: .07}
     }))
 };
 Interface.prototype.create = function () {
@@ -53,7 +58,7 @@ Interface.prototype.create = function () {
             lifetime: null
         }),
         gplayerHealth = new GraphicElement({
-            animation:null,
+            animation: null,
             spriteSheet: INTERFACE_SPRITE_SHEET,
             image: INTERFACE_SPRITES_JSON.frames['health_box'],
             position: {x: .08, y: .92},
@@ -101,7 +106,7 @@ Interface.prototype.create = function () {
         interface.addElement(gel);
         interface.addElement(tel);
     }
-    interface.addElement(fpsMeater);
+    // interface.addElement(fpsMeater);
     interface.addElement(gplayerHealth);
     interface.addElement(tplayerHealth);
 };
@@ -116,7 +121,7 @@ Interface.prototype.draw = function () {
     pop();
 };
 Interface.prototype._clear = function () {
-    this.call(new Interface);
+    Interface.call(this, new Interface);
 };
 Interface.prototype.addElement = function (element) {
     this.elements[element.id] = element;
@@ -176,8 +181,8 @@ function TextElement(setup) {
     this.border = setup.border || 5;
     this.borderColor = setup.borderColor || '#1560bf';
     this.color = setup.color || 255;
-    this.vAlign = setup.vAlign || LEFT;
-    this.hAlign = setup.hAlign || TOP;
+    this.vAlign = setup.vAlign || CENTER;
+    this.hAlign = setup.hAlign || CENTER;
     this.style = 'Font Style Normal';
 }
 TextElement.prototype.draw = function () {
@@ -185,7 +190,7 @@ TextElement.prototype.draw = function () {
     fill(_getVal(this.color, this)).stroke(_getVal(this.borderColor)).strokeWeight(this.border).textSize(_getVal(this.fontSize, this));
     textStyle(this.style);
     textFont(FONT);
-    textAlign(this.vAlign, this.hAlign);
+    textAlign(this.hAlign, this.vAlign);
     text(_getVal(this.text, this), width * this.position.x, height * this.position.y);
     pop();
 };

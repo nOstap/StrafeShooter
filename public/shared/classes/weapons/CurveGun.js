@@ -35,7 +35,7 @@ function LightBullet(weapon) {
 }
 
 LightBullet.prototype.update = function () {
-
+    Entity.prototype.update.call(this);
     if (!IS_SERVER && CFG.BULLET_TAIL)
         this.tail.push(this.position);
 

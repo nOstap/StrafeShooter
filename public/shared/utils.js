@@ -52,6 +52,7 @@ _earse = function (array, item) {
     item = null;
     return true;
 };
+
 _superRandom = function (min, max) {
     this.rand = null;
     if (srcore.seeded) {
@@ -155,10 +156,20 @@ _setupSocket = function (server) {
     });
     SOCKET.on('spawn_defer', function (data) {
         console.log('Spawn arrived!');
+        for (var s in data) {
+            data[s].startTime = Date.now();
+        }
         gameEngine._spawnDefer = data;
     });
-    SOCKET.on('input_update', function (data) {
-        gameEngine.applyPlayerInput(data.playerID, data.input, data.time);
+    SOCKET.on('player_death', function (id) {
+       interface.notification('Player '+ gameEngine.players[id].displayName+' death!');
+       gui.setPlayerList(gameEngine);
+    });
+    SOCKET.on('next_round', function () {
+        gameEngine.nextRound();
+    });
+    SOCKET.on('server_time', function (data) {
+        gameEngine.server_time = data;
     });
     SOCKET.on('sync_game', function (data) {
         gameEngine.sync(data);

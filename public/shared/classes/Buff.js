@@ -1,7 +1,6 @@
 function Buff(lifetime, player) {
     this.lifetime = lifetime;
     this.parent = player;
-    this.createdAt = Date.now();
     this.timeLeft = lifetime;
     this.sfx = {
         add: 'SFX.EFFECTS.BUFF_ADDING',

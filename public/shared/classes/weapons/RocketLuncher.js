@@ -26,7 +26,7 @@ function RocketBullet(weapon) {
     this.speed = 17;
     this.radius = 0.09;
     this.damping = 0;
-    this.damage = 5;
+    this.damage = 25;
     this._dieAtHit = true;
     this.restitution = 0;
     this.anim = 'ANIMATIONS.BULLETS.ROCKET';
@@ -43,8 +43,8 @@ RocketBullet.prototype.kill = function () {
         }
     }
     if (!IS_SERVER) {
-        eval(this.anim).explode.play(this.position);
-        SoundManager.worldPlay(this.weapon.sfx.hit, this.position);
+        eval(this.anim).explode.play(this.position.Copy());
+        SoundManager.worldPlay(this.weapon.sfx.hit, this.position.Copy());
     }
     physicsEngine.removeBody(this.physBody);
     this.physBody = null;

@@ -63,7 +63,10 @@ Animation.prototype.play = function (position, loop) {
     renderEngine.addAnimation(this);
 };
 Animation.animate = function (animation, animationState, x, y, angle) {
-    eval(animation + (animationState ? '.' + animationState : '')).animate(x, y, angle);
+    var animName = animation + (animationState ? '.' + animationState : '');
+    var animObj = eval(animName);
+    if (!animObj) throw new AnimationNotDeclared('Cannot find animation ' + animName);
+    animObj.animate(x, y, angle);
 };
 Animation.play = function (animation, position, loop) {
     animation.play(position, loop);
@@ -155,22 +158,44 @@ Animation.load = function () {
         COLLECTABLES: {
             LIFEBOX: new Animation({
                 frames: [
-                    SPRITES_JSON.frames.rocket_luncher_weapon_crate,
+                    SPRITES_JSON.frames.life_box_crate
                 ]
             }),
-            AMMOBOX: new Animation({
-                frames: [
-                    SPRITES_JSON.frames.rocket_luncher_weapon_crate,
-                ]
-            }),
+            AMMOBOX: {
+                RocketLuncher: new Animation({
+                    frames: [
+                        SPRITES_JSON.frames.rocket_luncher_weapon_crate
+                    ]
+                }),
+                Spas: new Animation({
+                    frames: [
+                        SPRITES_JSON.frames.spas_weapon_crate
+                    ]
+                }),
+                LightGun: new Animation({
+                    frames: [
+                        SPRITES_JSON.frames.light_gun_weapon_crate
+                    ]
+                }),
+                MachineGun: new Animation({
+                    frames: [
+                        SPRITES_JSON.frames.mini_gun_weapon_crate
+                    ]
+                }),
+                CurveGun: new Animation({
+                    frames: [
+                        SPRITES_JSON.frames.curve_gun_weapon_crate
+                    ]
+                })
+            },
             DOUBLEDAMAGE: new Animation({
                 frames: [
-                    SPRITES_JSON.frames.rocket_luncher_weapon_crate,
+                    SPRITES_JSON.frames.rocket_luncher_weapon_crate
                 ]
             }),
             MAXIMUMDEFENSE: new Animation({
                 frames: [
-                    SPRITES_JSON.frames.rocket_luncher_weapon_crate,
+                    SPRITES_JSON.frames.rocket_luncher_weapon_crate
                 ]
             })
         },
@@ -283,7 +308,12 @@ Animation.load = function () {
                         SPRITES_JSON.frames.step_jump
                     ]
                 })
-            }
+            },
+            DEAD: new Animation({
+                frames: [
+                    SPRITES_JSON.frames.dead
+                ]
+            })
         }
         ,
         WORLD: {}

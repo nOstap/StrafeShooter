@@ -39,7 +39,7 @@ function Gui() {
 
     for (var i = 0; i < guiBtns.length; i++) {
         guiBtns[i].mousePressed(function (e) {
-            if(this.attribute('inactive')) e.preventDefault();
+            if (this.attribute('inactive')) e.preventDefault();
             SoundManager.play('SFX.INTERFACE.BUTTON_CLICK');
         });
         guiBtns[i].mouseOver(function () {
@@ -131,29 +131,25 @@ Gui.prototype.hideLoader = function () {
     loader.addClass('hidden');
 };
 Gui.prototype.setPlayerList = function (game) {
-    var ulp_0 = select('.players', '#pause'),
-        ulp_1 = select('.players', '#spectate'),
-        uls_0 = select('.spectators', '#pause'),
-        uls_1 = select('.spectators', '#spectate');
-    ulp_0.html('');
-    ulp_1.html('');
-    uls_0.html('');
-    uls_1.html('');
+    var ulp = selectAll('.players'),
+        uls = selectAll('.spectators');
+    for (var i = 0; i < ulp.length; i++) ulp[i].html('');
+    for (var i = 0; i < uls.length; i++) uls[i].html('');
     for (var p in game.players) {
         var player = game.players[p];
-        var list_item = createElement('li', '<span>' + player.displayName + '</span><span>' + player.killsPerMatch + '/' + player.deathsPerMatch + '</span><span>PLAYER</span>');
-        list_item.addClass('list-item');
-        ulp_0.child(list_item)
-        ulp_1.child(list_item);
-        delete list_item;
+        for (var i = 0; i < ulp.length; i++) {
+            var list_item = createElement('li', '<span>' + player.displayName + '</span><span>' + player.killsPerMatch + '/' + player.deathsPerMatch + '</span><span>PLAYER</span>');
+            list_item.addClass('list-item');
+            ulp[i].child(list_item);
+        }
     }
     for (var s in game.spectators) {
         var spectator = game.spectators[s];
-        var list_item = createElement('li', '<span>' + spectator.displayName + '</span><span>N/N</span><span>SPECTATOR</span>');
-        list_item.addClass('list-item');
-        uls_0.child(list_item);
-        uls_1.child(list_item);
-        delete list_item;
+        for (var i = 0; i < uls.length; i++) {
+            var list_item = createElement('li', '<span>' + spectator.displayName + '</span><span>N/N</span><span>SPECTATOR</span>');
+            list_item.addClass('list-item');
+            uls[i].child(list_item);
+        }
     }
 };
 Gui.prototype.setServerList = function (list) {
@@ -171,8 +167,9 @@ Gui.prototype.setServerList = function (list) {
         server.socket = io.connect('http://' + host.host + ':' + host.port + '/stats', {reconnection: false});
         server.socket.parent = server;
         server.elm.parent = server;
+        var start = Date.now();
         server.socket.on('connected', function (data) {
-            this.parent.host.ping = Date.now() - data.time;
+            this.parent.host.ping = (Date.now() - start) / 2;
             this.parent.host.online = true;
             this.parent.host.status = 'online';
             this.parent.host.players = data.players + data.spectators;

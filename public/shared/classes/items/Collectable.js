@@ -1,19 +1,19 @@
-Colectable.prototype = Object.create(Entity.prototype);
-Colectable.prototype.constructor = Colectable;
-function Colectable(setup) {
+Collectable.prototype = Object.create(Entity.prototype);
+Collectable.prototype.constructor = Collectable;
+function Collectable(setup) {
     Entity.call(this);
     this.id = setup.id || "Collectable" + _guid();
     this.zIndex = 1;
     this.position = setup.position;
     this.angle = setup.angle || 0;
     this.sfx = 'SFX.EFFECTS.COLLECT';
-    this.anim = 'ANIMATIONS.COLLECTABLES.AMMOBOX';
     this.team = setup.team;
     this.lifetime = null;
+    this.group = 'collectables';
     this.halfHeight = 0.25;
     this.halfWidth = 0.25;
 }
-Colectable.prototype._simply = function () {
+Collectable.prototype._simply = function () {
     return {
         id: this.id,
         class: this.class,
@@ -27,7 +27,7 @@ Colectable.prototype._simply = function () {
     }
 };
 
-Colectable.prototype.setup = function (engine) {
+Collectable.prototype.setup = function (engine) {
     Entity.prototype.setup.call(this, engine);
     var entityDef = {
         halfWidth: this.halfWidth,
@@ -50,19 +50,18 @@ Colectable.prototype.setup = function (engine) {
     this.physBody.SetLinearVelocity(new Vec2(0.0, 0.0));
 
 };
-Colectable.prototype.update = function () {
+Collectable.prototype.update = function () {
     Entity.prototype.update.call(this);
     if (this.physBody !== null) {
         this.angle = this.physBody.GetAngle();
         this.position = this.physBody.GetPosition();
     }
 };
-Colectable.prototype.draw = function () {
-    Animation.animate(this.anim, null, this.position.x*SCALE, this.position.y*SCALE, this.angle);
+Collectable.prototype.draw = function () {
+   Animation.animate(this.anim, null, this.position.x*SCALE, this.position.y*SCALE, this.angle);
 };
-Colectable.prototype.collect = function () {
-};
-Colectable.prototype.colide = function (body) {
+
+Collectable.prototype.colide = function (body) {
     if (!body.physBody || !body.isPlayer || body.isDead) return;
     if (body.team == this.team || body.team == null)
     this.engine.collectItem(body.id, this.id);

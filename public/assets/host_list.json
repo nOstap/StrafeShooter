@@ -7,10 +7,17 @@
     "max_players": "100"
   },
   {
-    "name": "Mamin Server",
+    "name": "Hajnówka",
     "host": "ostapps.ddns.net",
     "location": "Hajnówka, PL",
     "port": "3000",
     "max_players": "6"
+  },
+  {
+    "name": "OvhServer",
+    "host": "79.137.77.37",
+    "location": "Francja",
+    "port": "3000",
+    "max_players": "20"
   }
 ]

@@ -4,7 +4,7 @@ const express = require('express');
 const util = require('util');
 const fs = require('fs');
 const vm = require('vm');
-const Loop = require('./loop.js');
+const Loop = require('./Loop.js');
 
 require('dotenv').config({path: __dirname + '/.env'});
 console.log = function (d) {
@@ -22,6 +22,7 @@ var includes =
     fs.readFileSync(__dirname + '/../public/shared/lib/Box2D.min.js') +
     fs.readFileSync(__dirname + '/../public/shared/config.js') +
     fs.readFileSync(__dirname + '/../public/shared/utils.js') +
+    fs.readFileSync(__dirname + '/../public/shared/classes/Exceptions.js') +
     fs.readFileSync(__dirname + '/../public/shared/classes/GameEngine.js') +
     fs.readFileSync(__dirname + '/../public/shared/classes/PhysicsEngine.js') +
     fs.readFileSync(__dirname + '/../public/shared/classes/SoundManager.js') +
@@ -29,7 +30,7 @@ var includes =
     fs.readFileSync(__dirname + '/../public/shared/classes/Obstacle.js') +
     fs.readFileSync(__dirname + '/../public/shared/classes/Player.js') +
     fs.readFileSync(__dirname + '/../public/shared/classes/Energy.js') +
-    fs.readFileSync(__dirname + '/../public/shared/classes/items/Colectable.js') +
+    fs.readFileSync(__dirname + '/../public/shared/classes/items/Collectable.js') +
     fs.readFileSync(__dirname + '/../public/shared/classes/items/AmmoBox.js') +
     fs.readFileSync(__dirname + '/../public/shared/classes/items/DoubleDamage.js') +
     fs.readFileSync(__dirname + '/../public/shared/classes/items/LifeBox.js') +
@@ -53,12 +54,12 @@ global.ioGame = io.of('/game');
 
 global.game = new GameEngine({
     id: _guid(),
-    game_name: process.env.game_name,
-    game_map: process.env.game_map,
-    game_mode: process.env.game_mode,
-    game_max_players: process.env.game_max_players,
-    game_rounds: process.env.game_rounds,
-    game_round_time: process.env.game_round_time
+    name: process.env.game_name,
+    map_index: process.env.game_map,
+    mode: process.env.game_mode,
+    max_players: process.env.game_max_players,
+    rounds: process.env.game_rounds,
+    round_time: process.env.game_round_time
 });
 
 game.map = JSON.parse(fs.readFileSync(__dirname + '/../public/assets/' + MAPS[game.map_index] + '.json'));
@@ -92,19 +93,14 @@ ioGame.on('connection', function (socket) {
         socket.on('deal_damage', function (entID, damage) {
             game.dealDamage(entID, damage);
         });
-        socket.on('get_server_time', function () {
-            console.log('server_time_request');
-            socket.emit('server_time', Date.now());
-        });
         socket.on('collect_item', function (entID, itemID) {
             game.dealDamage(entID, itemID);
         });
         socket.on('match_join', function () {
             game.joinMatch(clientID);
-            ioGame.emit('player_joined_match', game.players[clientID]._simply());
         });
         socket.on('player_input', function (data) {
-            game.applyPlayerInput(clientID, data.input);
+            game.applyPlayerInput(clientID, data.input, Date.now());
         });
         socket.on('disconnect', function () {
             console.log("Client " + clientID + " has disconnected");

@@ -62,11 +62,11 @@ const CFG = {
     PLAYER: {
         ACCELERATION: 18,
         MAX_HEALTH: 100,
-        SPAWN_TIME: 1000
+        SPAWN_TIME: 5000
     },
     BULLET_TAIL: false,
     MAX_PLAYERS: 10,
-    DEBUG: true,
+    DEBUG: false,
     MAX_GAMES: 1,
     MASTER_VOLUME: 0.1,
     EXPLOSION_PARTICLES: 25,

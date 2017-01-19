@@ -8917,7 +8917,7 @@ var p5 = function(sketch, node, sync) {
    * as mousePressed(). Sometimes, you might have an empty call to draw() in
    * your program, as shown in the above example.
    * <br><br>
-   * It is important to note that the drawing coordinate system will be reset
+   * It is important to note that the drawing coordinate system will be _reset
    * at the beginning of each draw() call. If any transformations are performed
    * within draw() (ex: scale, rotate, translate, their effects will be
    * undone at the beginning of draw(), so transformations will not accumulate
@@ -12273,7 +12273,7 @@ p5.Renderer2D.prototype.background = function() {
     var newFill = color.toString();
     this.drawingContext.fillStyle = newFill;
     this.drawingContext.fillRect(0, 0, this.width, this.height);
-    // reset fill
+    // _reset fill
     this.drawingContext.fillStyle = curFill;
   }
   this.drawingContext.restore();
@@ -13662,7 +13662,7 @@ p5.prototype.resizeCanvas = function (w, h, noRedraw) {
       }
     }
     this._renderer.resize(w, h);
-    // reset canvas properties
+    // _reset canvas properties
     for (var savedKey in props) {
       this.drawingContext[savedKey] = props[savedKey];
     }
@@ -14355,7 +14355,7 @@ p5.prototype.resetMatrix = function() {
  * Transformations apply to everything that happens after and subsequent
  * calls to the function accumulates the effect. For example, calling
  * rotate(HALF_PI) and then rotate(HALF_PI) is the same as rotate(PI).
- * All tranformations are reset when draw() begins again.
+ * All tranformations are _reset when draw() begins again.
  * <br><br>
  * Technically, rotate() multiplies the current transformation matrix
  * by a rotation matrix. This function can be further controlled by
@@ -14493,7 +14493,7 @@ p5.prototype.rotateZ = function(rad) {
  * Transformations apply to everything that happens after and subsequent
  * calls to the function multiply the effect. For example, calling scale(2.0)
  * and then scale(1.5) is the same as scale(3.0). If scale() is called
- * within draw(), the transformation is reset when the loop begins again.
+ * within draw(), the transformation is _reset when the loop begins again.
  * <br><br>
  * Using this function with the z parameter is only available in WEBGL mode.
  * This function can be further controlled with push() and pop().
@@ -14573,7 +14573,7 @@ p5.prototype.scale = function() {
  * Transformations apply to everything that happens after and subsequent
  * calls to the function accumulates the effect. For example, calling
  * shearX(PI/2) and then shearX(PI/2) is the same as shearX(PI).
- * If shearX() is called within the draw(), the transformation is reset when
+ * If shearX() is called within the draw(), the transformation is _reset when
  * the loop begins again.
  * <br><br>
  * Technically, shearX() multiplies the current transformation matrix by a
@@ -14614,7 +14614,7 @@ p5.prototype.shearX = function(angle) {
  * Transformations apply to everything that happens after and subsequent
  * calls to the function accumulates the effect. For example, calling
  * shearY(PI/2) and then shearY(PI/2) is the same as shearY(PI). If
- * shearY() is called within the draw(), the transformation is reset when
+ * shearY() is called within the draw(), the transformation is _reset when
  * the loop begins again.
  * <br><br>
  * Technically, shearY() multiplies the current transformation matrix by a
@@ -14655,7 +14655,7 @@ p5.prototype.shearY = function(angle) {
  * and subsequent calls to the function accumulates the effect. For example,
  * calling translate(50, 0) and then translate(20, 0) is the same as
  * translate(70, 0). If translate() is called within draw(), the
- * transformation is reset when the loop begins again. This function can be
+ * transformation is _reset when the loop begins again. This function can be
  * further controlled by using push() and pop().
  *
  * @method translate

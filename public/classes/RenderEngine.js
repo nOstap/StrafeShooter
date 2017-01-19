@@ -83,38 +83,48 @@ RenderEngine.prototype.render = function (entities, drawDebug) {
     clear();
     background('#339eff');
 
-    for (var i = 0; i < this.bottomLayers.length; i++) {
-        this.renderLayer(this.bottomLayers[i]);
-    }
+    try {
 
-    var sortedEnt = _sortByKey(entities, 'zIndex');
-    for (var i = 0; i < sortedEnt.length; i++) {
-        if (sortedEnt[i].x * SCALE > -CAMERA_POS.x + (width) ||
-            sortedEnt[i].y * SCALE < -CAMERA_POS.x - (width) ||
-            sortedEnt[i].x * SCALE > -CAMERA_POS.y + (height) ||
-            sortedEnt[i].y * SCALE < -CAMERA_POS.y - (height)) continue;
-
-        sortedEnt[i].draw();
-    }
-    sortedEnt = null;
-    var bal = this.buffered_animations.length;
-    for (var i = 0; i < bal; i++) {
-        var ani = this.buffered_animations[i];
-        if (ani.maxLoops && ani.maxLoops <= ani.currentLoop) {
-            _earse(this.buffered_animations,ani);
-            continue;
+        for (var i = 0; i < this.bottomLayers.length; i++) {
+            this.renderLayer(this.bottomLayers[i]);
         }
-        ani.animate();
-    }
 
-    for (var i = 0; i < this.topLayers.length; i++) {
-        this.renderLayer(this.topLayers[i]);
+        var sortedEnt = _sortByKey(entities, 'zIndex');
+        for (var i = 0; i < sortedEnt.length; i++) {
+            if (sortedEnt[i].x * SCALE > -CAMERA_POS.x + (width) ||
+                sortedEnt[i].y * SCALE < -CAMERA_POS.x - (width) ||
+                sortedEnt[i].x * SCALE > -CAMERA_POS.y + (height) ||
+                sortedEnt[i].y * SCALE < -CAMERA_POS.y - (height)) continue;
+
+            sortedEnt[i].draw();
+        }
+        var bal = this.buffered_animations.length;
+        for (var i = 0; i < bal; i++) {
+            var ani = this.buffered_animations[i];
+            if (ani) {
+                if (ani.maxLoops && ani.maxLoops <= ani.currentLoop) {
+                    _earse(this.buffered_animations, ani);
+                    continue;
+                }
+                ani.animate();
+            }
+        }
+
+        for (var i = 0; i < this.topLayers.length; i++) {
+            this.renderLayer(this.topLayers[i]);
+        }
+        interface.draw();
+        if (drawDebug) physicsEngine.world.DrawDebugData();
+
+    } catch (ex) {
+        if (ex.error)
+            ex.error();
+        else throw ex;
     }
-    interface.draw();
-    if (drawDebug) physicsEngine.world.DrawDebugData();
 };
 RenderEngine.prototype.addAnimation = function (anim) {
     this.buffered_animations.push(anim);
+
 };
 
 var renderEngine = new RenderEngine();

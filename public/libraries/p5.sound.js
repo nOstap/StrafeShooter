@@ -483,7 +483,7 @@
          *  </code></div>
          */
         p5.prototype.soundFormats = function () {
-            // reset extensions array
+            // _reset extensions array
             p5sound.extensions = [];
             // add extensions
             for (var i = 0; i < arguments.length; i++) {
@@ -1021,7 +1021,7 @@
             time = time + now;
             // TO DO: if already playing, create array of buffers for easy stop()
             if (this.buffer) {
-                // reset the pause time (if it was paused)
+                // _reset the pause time (if it was paused)
                 this._pauseTime = 0;
                 // handle restart playmode
                 if (this.mode === 'restart' && this.buffer && this.bufferSourceNode) {
@@ -1523,7 +1523,7 @@
         };
         /**
          * Move the playhead of the song to a position, in seconds. Start
-         * and Stop time. If none are given, will reset the file to play
+         * and Stop time. If none are given, will _reset the file to play
          * entire duration from start to finish.
          *
          * @method jump
@@ -4632,7 +4632,7 @@
                         this.oscillator.frequency.linearRampToValueAtTime(val, tFromNow + rampTime + now);
                     }
                 }
-                // reset phase if oscillator has a phase
+                // _reset phase if oscillator has a phase
                 if (this.phaseAmount) {
                     this.phase(this.phaseAmount);
                 }
@@ -7757,7 +7757,7 @@
         };
         /**
          *  Similar to .addImpulse, except that the <code>.impulses</code>
-         *  Array is reset to save memory. A new <code>.impulses</code>
+         *  Array is _reset to save memory. A new <code>.impulses</code>
          *  array is created with this impulse as the only item.
          *
          *  @method  resetImpulse
@@ -8346,7 +8346,7 @@
                 throw 'invalid input. addPhrase accepts name, callback, array or a p5.Phrase';
             }
             this.phrases.push(p);
-            // reset the length if phrase is longer than part's existing length
+            // _reset the length if phrase is longer than part's existing length
             if (p.sequence.length > this.length) {
                 this.length = p.sequence.length;
             }

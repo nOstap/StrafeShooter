@@ -7,9 +7,9 @@ function Player(setup) {
     this.health = setup.health || CFG.PLAYER.MAX_HEALTH;
     this.maxHealth = setup.maxHealth || CFG.PLAYER.MAX_HEALTH;
     this.speed = setup.speed || CFG.PLAYER.ACCELERATION;
-    this.position = setup.position || new Vec2(CFG.MAP_WIDTH * .5, CFG.MAP_HEIGHT * .5);
+    this.position = setup.position ? new Vec2(setup.position.x, setup.position.y) : new Vec2(CFG.MAP_WIDTH * .5, CFG.MAP_HEIGHT * .5);
     this.lookAngle = setup.lookAngle || 0;
-    this._spawned = setup._spawned;
+    this._spawned = setup._spawned || false;
     this.team = setup.team || null;
     this.killsPerMatch = setup.killsPerMatch || 0;
     this.deathsPerMatch = setup.deathsPerMatch || 0;
@@ -52,15 +52,17 @@ function Player(setup) {
     this.head = setup.head || 0;
     this.sfx = {
         jump: 'SFX.EFFECTS.JUMP',
-        walk: 'SFX.EFFECTS.WALK'
+        walk: 'SFX.EFFECTS.WALK',
+        hurt: 'SFX.EFFECTS.HURT',
+        die: 'SFX.EFFECTS.DEATH'
     };
     this.density = 1;
+    this.group = 'players';
     this.zIndex = 2;
 }
 
 Player.prototype.setup = function (engine) {
     Entity.prototype.setup.call(this, engine);
-    this.position = new Vec2(this.position.x, this.position.y);
     var ptm_ratio = SCALE;
     var b2Vec2 = Vec2;
     var polygons = [{
@@ -104,21 +106,39 @@ Player.prototype.draw = function () {
     var headAnim = 'ANIMATIONS.PLAYER.HEAD[' + this.head + ']';
     var bodyAnim = 'ANIMATIONS.PLAYER.BODY[' + this.body + ']';
     var legsAnim = 'ANIMATIONS.PLAYER.LEGS';
+    var deadAnim = 'ANIMATIONS.PLAYER.DEAD';
     var footStepAnim = 'ANIMATIONS.PLAYER.FOOTSTEP';
-    this.path.forEach(function (val) {
-        Animation.animate(footStepAnim, null, val.x * SCALE, val.y * SCALE, val.angle - HALF_PI);
-    });
-    Animation.animate(legsAnim, this.animationState, this.position.x * SCALE, this.position.y * SCALE, this.angle + HALF_PI);
-    Animation.animate(bodyAnim, null, this.position.x * SCALE, this.position.y * SCALE, this.lookAngle + HALF_PI);
-    Animation.animate(this.weapons[this.activeWeapon].anim, this.input.fire ? 'fire' : 'idle', vec.x * SCALE, vec.y * SCALE, this.lookAngle + HALF_PI);
-    Animation.animate(headAnim, null, this.position.x * SCALE, this.position.y * SCALE, this.lookAngle + HALF_PI);
-
+    if (this.isDead) {
+        Animation.animate(deadAnim, null, this.position.x * SCALE, this.position.y * SCALE);
+    } else {
+        this.path.forEach(function (val) {
+            Animation.animate(footStepAnim, null, val.x * SCALE, val.y * SCALE, val.angle - HALF_PI);
+        });
+        Animation.animate(legsAnim, this.animationState, this.position.x * SCALE, this.position.y * SCALE, this.angle + HALF_PI);
+        Animation.animate(bodyAnim, null, this.position.x * SCALE, this.position.y * SCALE, this.lookAngle + HALF_PI);
+        Animation.animate(this.weapons[this.activeWeapon].anim, this.input.fire ? 'fire' : 'idle', vec.x * SCALE, vec.y * SCALE, this.lookAngle + HALF_PI);
+        Animation.animate(headAnim, null, this.position.x * SCALE, this.position.y * SCALE, this.lookAngle + HALF_PI);
+        push();
+        strokeWeight(2);
+        stroke('#0075ff');
+        fill(255);
+        textFont(FONT);
+        textSize(16);
+        text(this.displayName, this.position.x * SCALE, this.position.y * SCALE - 40);
+        pop();
+    }
 };
 Player.prototype.update = function () {
     if (this.health <= 0) {
-        this.isDead = true;
-        this.physBody.SetActive(false);
+        if (!this.isDead) {
+            this.zIndex = 1;
+            this.physBody.SetActive(false);
+            if (IS_SERVER) ioGame.emit('player_death', this.id);
+            SoundManager.worldPlay(this.sfx.die, this.position);
+        }
         this.animationState = 'die';
+        this.isDead = true;
+
     } else {
         if (this.isDead) {
             this.isDead = false;
@@ -143,11 +163,9 @@ Player.prototype.applyInput = function (input, time) {
     var angle = this.angle;
 
     if (this.input.isWalking && !this.isInAir) {
-        if(!IS_SERVER) {
-            if(frameCount%5 === 0) {
-                this.path.push({x: this.position.x, y: this.position.y, angle: this.angle});
-            }
-            if(this.path.length>5) this.path.shift();
+        if (!IS_SERVER) {
+            if (frameCount % 5 === 0) this.path.push({x: this.position.x, y: this.position.y, angle: this.angle});
+            if (this.path.length > 5) this.path.shift();
         }
         if (this.physBody.GetLinearVelocity().Length() > 1) {
             this.animationState = 'walk';
@@ -190,26 +208,22 @@ Player.prototype.applyInput = function (input, time) {
         else
             this.switchWeapon();
     }
-    if (this.input.ready) this.isReady = true;
+    if (this.input.ready) {
+        this.isReady = true;
+        if (!IS_SERVER) interface.notification('Ready!', 1000);
+    }
 };
-Player.prototype.reset = function () {
-    this.isDead = false;
+Player.prototype._reset = function () {
     this.maxHealth = CFG.PLAYER.MAX_HEALTH;
     this.health = this.maxHealth;
     this.killsPerMatch = 0;
     this.deathsPerMatch = 0;
-    this.isReady = false;
+    this.zIndex = 2;
     this._spawned = false;
     this.buffs = {};
-    this.weapons = {
-        'Spas': new Spas(this),
-        'LightGun': new LightGun(this),
-        'CurveGun': new CurveGun(this),
-        'RocketLuncher': new RocketLuncher(this),
-        'Bow': new Bow(this),
-        'MachineGun': new MachineGun(this)
-    };
-    if(!IS_SERVER) interface.showCounter(CFG.PLAYER.SPAWN_TIME);
+    for (var wIndex in this.weapons) {
+        this.weapons[wIndex]._reset();
+    }
 };
 Player.prototype.colide = function (body) {
     if (body.isPlayer) {

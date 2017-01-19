@@ -1,14 +1,15 @@
 function Weapon(player, setup) {
+    if (this.constructor === Weapon) throw new Error("Weapon is a abstract class.");
     if (!setup) setup = {};
     this.player = player;
     this.class = this.constructor.name;
     this.speed = null;
     this.ammoType = false;
-    this.ammoFeed = 10;
+    this.ammunition = setup.ammunition || 10;
+    this.ammoFeed = this.ammunition;
     this.bullets = 1;
     this.distance = null;
     this.dispersion = 0;
-    this.ammunition = setup.ammunition;
     this.sfx = {
         fire: null,
         start: null,
@@ -30,6 +31,9 @@ Weapon.prototype._simply = function () {
         timeout: this.timeout
     }
 };
+Weapon.prototype._reset = function () {
+    this.constructor.call(this, this.player);
+};
 Weapon.prototype.activate = function () {
     SoundManager.play(this.sfx.start);
     if (this.player.input.fire)
@@ -47,7 +51,7 @@ Weapon.prototype.fire = function () {
     if (Date.now() - this.reloadTime >= this.delay) {
         this.reloadTime = Date.now();
         if (this.ammunition > 0) {
-            SoundManager.play(this.sfx.fire, null, this.sfxMode);
+            SoundManager.worldPlay(this.sfx.fire, this.position, this.sfxMode);
             this.ammunition--;
             for (var i = 0; i < this.bullets; i++) {
                 var bullet = new global[this.ammoType](this);
@@ -73,6 +77,7 @@ Weapon.prototype.stopFire = function () {
 Bullet.prototype = Object.create(Entity.prototype);
 Bullet.prototype.constructor = Bullet;
 function Bullet(weapon) {
+    if (this.constructor === Weapon) throw new Error("Bullet is a abstract class.");
     Entity.call(this);
     this.weapon = weapon;
     this._dieAtHit = false;
@@ -125,6 +130,11 @@ Bullet.prototype.setup = function (engine) {
         this.target.y - this.weapon.player.getFixedPos().y
     );
     this.weapon.player.physBody.SetAngle(Math.atan2(this.direction.y, this.direction.x));
+    this.weapon.player.lookAngle = this.weapon.player.physBody.GetAngle();
+    this.direction.Set(
+        this.target.x - this.weapon.player.getFixedPos().x,
+        this.target.y - this.weapon.player.getFixedPos().y
+    );
     var pFix = this.weapon.player.getShootFix();
     this.direction.Subtract(pFix);
     this.position.Add(pFix);
@@ -172,6 +182,11 @@ Bullet.prototype.colide = function (body) {
     if (body.health != null)
         this.engine.dealDamage(body.id, damage);
     this.damage *= this.persistence;
-    SoundManager.worldPlay(body.sfx.hurt, this.position, 1);
+    SoundManager.worldPlay(body.sfx.hurt, body.position.Copy(), 1);
+
+    if (body.isPlayer && body.health - damage <= 0) {
+        this.weapon.player.killsPerMatch++;
+        body.deathsPerMatch++;
+    }
     if (this._dieAtHit || body.isPlayer) this._markToKill = true;
 };

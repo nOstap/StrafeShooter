@@ -1,5 +1,5 @@
 function Entity() {
-    this.id = this.constructor.name+_guid();
+    this.id = this.constructor.name + _guid();
     this.class = this.constructor.name;
     this.physBody = null;
     this.engine = null;
@@ -11,6 +11,7 @@ function Entity() {
     this.lifetime = null;
     this.health = null;
     this.maxHealth = null;
+    this.group = null;
     this.radius = null;
     this.halfWidth = null;
     this.halfHeight = null;
@@ -26,24 +27,29 @@ Entity.prototype.draw = function () {
 };
 Entity.prototype.setup = function (engine) {
     this.engine = engine;
+    this.createdAt = Date.now();
 };
 Entity.prototype.kill = function () {
     if (this.physBody)
-    physicsEngine.removeBody(this.physBody);
+        physicsEngine.removeBody(this.physBody);
     this.physBody = null;
     if (this.engine)
         this.engine.removeEntity(this);
 };
 Entity.prototype.update = function () {
-        if (this.lifetime != null) {
-            if (Date.now() - this.createdAt >= this.lifetime || this._markToKill) {
-                this.kill();
-                return;
-            }
+    if (this.lifetime != null) {
+        if (Date.now() - this.createdAt >= this.lifetime) {
+            this.kill();
+            return;
         }
-        if (this.health != null) {
-            if(this.health <= 0) this.kill();
-        }
+    }
+    if (this._markToKill) {
+        this.kill();
+        return;
+    }
+    if (this.health != null) {
+        if (this.health <= 0) this.kill();
+    }
 };
 Entity.prototype._simply = function () {
     return {

@@ -3695,7 +3695,7 @@
                     // an open event never happened
                     this.cleanup();
                 }
-                this.backoff.reset();
+                this.backoff._reset();
                 this.readyState = 'closed';
                 if (this.engine) this.engine.close();
             };
@@ -3710,7 +3710,7 @@
                 debug('onclose');
 
                 this.cleanup();
-                this.backoff.reset();
+                this.backoff._reset();
                 this.readyState = 'closed';
                 this.emit('close', reason);
 
@@ -3732,7 +3732,7 @@
 
                 if (this.backoff.attempts >= this._reconnectionAttempts) {
                     debug('reconnect failed');
-                    this.backoff.reset();
+                    this.backoff._reset();
                     this.emitAll('reconnect_failed');
                     this.reconnecting = false;
                 } else {
@@ -3780,7 +3780,7 @@
             Manager.prototype.onreconnect = function () {
                 var attempt = this.backoff.attempts;
                 this.reconnecting = false;
-                this.backoff.reset();
+                this.backoff._reset();
                 this.updateSocketIds();
                 this.emitAll('reconnect', attempt);
             };
@@ -8158,7 +8158,7 @@
              * @api public
              */
 
-            Backoff.prototype.reset = function(){
+            Backoff.prototype._reset = function(){
                 this.attempts = 0;
             };
 
@@ -8198,4 +8198,3 @@
       /******/ ])
 });
 ;
-//# sourceMappingURL=socket.io.js.map

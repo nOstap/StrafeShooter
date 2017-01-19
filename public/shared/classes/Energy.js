@@ -4,7 +4,7 @@ function Energy(parent) {
     Entity.call(this);
     this.id = "Energy" + _guid();
     this.parent = parent;
-    this.lifetime = 300;
+    this.lifetime = 100;
     this._spawned = true;
     this.physBody = null;
     this.damage = 5;
@@ -13,10 +13,10 @@ Energy.prototype.setup = function (engine) {
     Entity.prototype.setup.call(this, engine);
     var entityDef = {
         position: this.parent.position.Copy(),
-        radius: 0.05,
+        radius: 0.03,
         allowSleep: false,
         friction: 0,
-        density: 10000,
+        density: 1000,
         restitution: 1,
         userData: {
             id: this.id,
@@ -34,7 +34,7 @@ Energy.prototype.release = function (force) {
     if (this.physBody !== null) {
         this.createdAt = Date.now();
         this.physBody.SetActive(true);
-        var energy_value = 2000;
+        var energy_value = 1000;
         force.Normalize();
         force.Multiply(energy_value * this.engine.delta);
         this.physBody.ApplyImpulse(force, this.physBody.GetWorldCenter())
@@ -48,6 +48,7 @@ Energy.prototype.colide = function (body) {
         damage *= dmgBuf.multipler;
     if (body.health != null)
         this.engine.dealDamage(body.id, damage);
+    SoundManager.worldPlay(body.sfx.hurt, this.position, 1);
     if(body.isPlayer) this._markToKill = true;
 };
 Energy.prototype.update = function () {

@@ -1,25 +1,27 @@
 function GameEngine(setup) {
     this.id = setup.id || null;
     this.local_player = null;
-    this.name = setup.game_name || null;
+    this.name = setup.name || null;
     this.host = setup.host || null;
-    this.mode = setup.game_mode || 0;
-    this.map_index = setup.game_map || 0;
+    this.mode = setup.mode || 0;
+    this.server_time = setup.server_time || Date.now();
+    this.map_index = setup.map_index || 0;
     this.map = null;
     this.during_match = setup.during_match || false;
-    this.round_time = setup.game_round_time || 15;
-    this.snap_entities = {};
-    this.max_players = setup.game_max_players;
+    this.round_time = setup.round_time || 15;
+    this.currentRound = setup.currentRound || 0;
+    this.max_players = setup.max_players;
     this.rounds = setup.rounds || 1;
     this.entities = [];
     this.players = {};
+    this.spectators = {};
+    this.collectables = {};
     this.last_tick = Date.now();
     this.mspf = 0;
     this.delta = 0;
     this.fps = 0;
     this.frame_count = 0;
     this.run = false;
-    this.spectators = {};
     this._spawnDefer = [];
     this._killedEnt = [];
 }
@@ -27,7 +29,6 @@ function GameEngine(setup) {
 GameEngine.prototype.setup = function (data) {
     physicsEngine.addContactListener({
         PostSolve: function (a, b, engine) {
-            if (IS_SERVER) return;
             var uDataA = a.GetUserData();
             var uDataB = b.GetUserData();
             var colType = 0x0000;
@@ -42,29 +43,25 @@ GameEngine.prototype.setup = function (data) {
             if (colType === (CFG.COLLISION_GROUPS.ITEM | CFG.COLLISION_GROUPS.WALL))
                 return;
 
-            if ((colType === CFG.COLLISION_GROUPS.BULLET | CFG.COLLISION_GROUPS.PLAYER) ||
-                (colType === CFG.COLLISION_GROUPS.BULLET | CFG.COLLISION_GROUPS.OBSTACLE) ||
-                (colType === CFG.COLLISION_GROUPS.ITEM | CFG.COLLISION_GROUPS.PLAYER)) {
-                if (engine.local_player == uDataA.id) return;
-            }
+
             engine.onCollision(uDataA, uDataB);
         }
     }, this);
     this.loadMap();
     if (!IS_SERVER) {
         this.local_player = SOCKET.id;
+        //LOAD INIT GAME DATA
         for (var i = 0; i < data.entities.length; i++) {
             var entDef = data.entities[i];
             var ent = new global[entDef.class](entDef);
-            if (ent.isPlayer)
-                this.addPlayer(ent);
-            else
-                this.addEntity(ent);
+            this.addEntity(ent);
         }
         for (var s in data.spectators) {
             var p = new Player(data.spectators[s]);
             gameEngine.addSpectator(p);
         }
+        //END INIT DATA LOAD
+
         gui.setPlayerList(this);
         renderEngine.setup();
     }
@@ -73,8 +70,9 @@ GameEngine.prototype.setup = function (data) {
 };
 GameEngine.prototype.update = function () {
     if (!this.run) return;
+    if (IS_SERVER) this.server_time = Date.now();
     this.frame_count++;
-    this.mspf = (Date.now() - this.last_tick);
+    this.mspf = Date.now() - this.last_tick;
     this.fps = 1000 / this.mspf;
     this.delta = 1 / this.fps;
     if (this.delta > 0.25) this.delta = 0.25;
@@ -91,51 +89,70 @@ GameEngine.prototype.update = function () {
     for (var i = 0; i < kel; i++) {
         var ent = this._killedEnt[i];
         _earse(this.entities, ent);
+        if (ent.group) delete this[ent.group][ent.id];
     }
     this._killedEnt = [];
 
     var sdl = this._spawnDefer.length;
     for (var i = 0; i < sdl; i++) {
         var spawn = this._spawnDefer[i];
-        if(spawn)
-        if (Date.now() - spawn.startTime >= spawn.delay) {
-            var entity;
-            if(spawn.entDef) {
-                entity = new global[spawn.entDef.class](spawn.entDef);
-                this.addEntity(entity);
-            } else {
+        if (spawn) {
+            if (Date.now() - spawn.startTime >= spawn.delay) {
+                var entity;
                 entity = this.getEntityById(spawn.entityID);
-                entity.health = entity.maxHealth;
+                if (!entity) {
+                    entity = new global[spawn.entDef.class](spawn.entDef);
+                    this.addEntity(entity);
+                }
+                if (entity.physBody) {
+                    entity.health = entity.maxHealth;
+                    entity.position = spawn.position;
+                    entity.physBody.SetPosition(spawn.position);
+                }
+                entity._spawned = true;
+                SoundManager.worldPlay('SFX.EFFECTS.RESPAWN', spawn.position);
+                _earse(this._spawnDefer, spawn);
             }
-            if (entity.physBody) {
-                entity.position = spawn.position;
-                entity.physBody.SetPosition(spawn.position);
-            }
-            entity._spawned = true;
-            SoundManager.worldPlay('SFX.EFFECTS.RESPAWN', spawn.position);
-            _earse(this._spawnDefer, spawn);
         }
     }
-
+    var flags = this.setFlags();
     if (!this.during_match) {
-        var playersReady = false;
-        for (var player in this.players) {
-            if (this.players[player].isReady) {
-                playersReady = true;
-            } else {
-                playersReady = false;
-                break;
-            }
-
-        }
-        if (playersReady) this.startMatch();
+        if (flags.ready) this.startMatch();
     } else {
-        if(Date.now()-this.during_match >= this.round_time*1000) {
-            this.during_match = false;
+        if (IS_SERVER) {
+            if (Date.now() - this.during_match > this.round_time * 1000 * 60 || flags.roundWin)
+                this.nextRound();
         }
     }
     physicsEngine.update(this.fps);
     SoundManager.update();
+};
+GameEngine.prototype.setFlags = function () {
+    var flags = {
+        ready: null,
+        roundWin: 0
+    };
+    var killed = 0;
+    for (var p in this.players) {
+        if (flags.ready === null) flags.ready = this.players[p].isReady;
+        else
+            flags.ready &= this.players[p].isReady;
+        if (this.players[p].isDead) killed++;
+    }
+    var pl = Object.keys(this.players).length;
+    if (pl > 1)
+        flags.roundWin = ~~(pl - 1 == killed);
+    return flags;
+}
+GameEngine.prototype.nextRound = function () {
+    if (IS_SERVER) ioGame.emit('next_round');
+    this.currentRound++;
+    this.during_match = Date.now();
+    if (this.currentRound > this.rounds) return this.endMatch();
+    this.clearMap();
+    this.spawnPlayers();
+    this.spawnItems();
+    if (!IS_SERVER) interface.showCounter(CFG.PLAYER.SPAWN_TIME, STRINGS[CFG.LANG].GAMEPLAY.ROUND + ' ' + this.currentRound);
 };
 GameEngine.prototype.render = function () {
     if (IS_SERVER) return;
@@ -151,6 +168,8 @@ GameEngine.prototype.loadMap = function () {
 
     var seawalls = _findByKey(this.map.layers, 'name', 'SeaWalls');
     var walls = _findByKey(this.map.layers, 'name', 'Walls');
+
+    //TODO: KINEMATIC BODIES SCRIPTS LOADING  ( MAP_SCRIPTS );
 
     for (var i = 0; i < seawalls.objects.length; i++) {
         var obj = seawalls.objects[i];
@@ -191,45 +210,66 @@ GameEngine.prototype.loadMap = function () {
     }
 };
 GameEngine.prototype.startMatch = function () {
-    if(IS_SERVER) {
-        var cratespawns = _findByKey(this.map.layers, 'properties.type', 'CrateSpawn');
-        for (var index in cratespawns)
-            for (var i = 0; i < cratespawns[index].objects.length; i++) {
-                var obj = cratespawns[index].objects[i];
-                var setup = {
-                    type: 'dynamic',
-                    position: new Vec2(),
-                    weapon: obj.type || null
-                };
-                var ent = new global[cratespawns[index].name.replace('Spawns', '')](setup);
-                this.addEntity(ent);
-                this.spawn(ent.id, 5000, null, ent._simply());
-            }
-    }
-    for (var player in this.players) {
-        this.players[player].reset();
-        this.spawn(this.players[player].id, CFG.PLAYER.SPAWN_TIME);
-    }
+    this.currentRound = 0;
+    this.nextRound();
     this.during_match = Date.now();
-
+};
+GameEngine.prototype.endMatch = function () {
+    this.during_match = false;
+    this.clearMap();
+    for (var p in this.players) {
+        var player = this.players[p];
+        this.spectators[p] = player;
+    }
+    this.players = {};
+    //TODO NOT SPEC JUST SHOW STATS AND MAP QUIZ
+    if (!IS_SERVER) gui.show('SPECTATE');
+};
+GameEngine.prototype.clearMap = function () {
+    for (var cIndex in this.collectables) {
+        this.collectables[cIndex]._markToKill = true;
+    }
+    this.collectables = {};
+    return true;
+};
+GameEngine.prototype.spawnPlayers = function () {
+    for (var p in this.players) {
+        this.players[p]._reset();
+        this.spawn(this.players[p].id, CFG.PLAYER.SPAWN_TIME);
+    }
+};
+GameEngine.prototype.spawnItems = function () {
+    if (!IS_SERVER) return;
+    var cratespawns = _findByKey(this.map.layers, 'properties.type', 'CrateSpawn');
+    for (var index in cratespawns) {
+        for (var i = 0; i < cratespawns[index].objects.length; i++) {
+            var obj = cratespawns[index].objects[i];
+            var setup = {
+                id: index + _guid(),
+                type: 'dynamic',
+                position: new Vec2(),
+                weapon: obj.type || null
+            };
+            var ent = new global[cratespawns[index].name.replace('Spawns', '')](setup);
+            this.addEntity(ent);
+            this.spawn(ent.id, 5000, null, ent._simply());
+        }
+    }
 };
 GameEngine.prototype.joinMatch = function (id) {
     var player = this.spectators[id];
     if (!player.isSpectator) return;
     player.isSpectator = false;
-    this.addPlayer(player);
-    if (IS_SERVER && this.mode === CFG.GAME_MODES.FFA) this.spawn(player.id, CFG.PLAYER.SPAWN_TIME);
+    this.addEntity(player);
     delete this.spectators[id];
+    if (IS_SERVER)
+        ioGame.emit('player_joined_match', player._simply());
 };
 GameEngine.prototype.addSpectator = function (s) {
     this.spectators[s.id] = s;
 };
-GameEngine.prototype.addPlayer = function (p) {
-    var pg = this.addEntity(p);
-    this.players[pg.id] = pg;
-};
 GameEngine.prototype.spawn = function (entityID, delay, team, entDef) {
-    if(!IS_SERVER) return;
+    if (!IS_SERVER) return;
     var entity = this.getEntityById(entityID);
     if (!entity) return false;
     var spawns = _findByKey(this.map.layers, 'name', entity.class + 'Spawns');
@@ -249,12 +289,14 @@ GameEngine.prototype.removePlayer = function (id) {
     if (!p.isSpectator) {
         this.removeEntity(p);
     }
-    delete this.spectators[id];
     delete this.players[id];
+    delete this.spectators[id];
+    if (Object.keys(this.players).length == 0) this.endMatch();
 };
 GameEngine.prototype.addEntity = function (entity) {
     entity.setup(this);
     this.entities.push(entity);
+    if (entity.group) this[entity.group][entity.id] = entity;
     return entity;
 };
 GameEngine.prototype.halt = function () {
@@ -266,29 +308,27 @@ GameEngine.prototype.halt = function () {
     }, 0);
 };
 GameEngine.prototype.sync = function (data) {
-    // for (var i = 0; i < data.entities.length; i++) {
-    //     var snap = data.entities[i];
-    //     if (this.snap_entities[snap.id]) {
-    //         this.snap_entities[snap.id].physBody.SetPosition(snap.position);
-    //         this.snap_entities[snap.id].physBody.SetAngle(snap.angle);
-    //         this.snap_entities[snap.id].position = snap.position;
-    //         this.snap_entities[snap.id].angle = snap.angle;
-    //     } else {
-    //         var ent = new global[snap.class](snap);
-    //         ent.setup(this);
-    //         ent.physBody.SetActive(false);
-    //         this.snap_entities[ent.id] = ent;
-    //     }
-    //     if (snap.isPlayer) {
-    //         var lp = this.players[snap.id];
-    //         if (lp.id != this.local_player) lp.applyInput(snap.input, data.delta);
-    //         lp.physBody.SetPosition(snap.position);
-    //         lp.physBody.SetAngle(snap.angle);
-    //         lp.position = snap.position;
-    //         lp.angle = snap.angle;
-    //     }
-    //     snap = null;
-    // }
+    var snap_players = data.players;
+    var snap_collectables = data.collectables;
+    for (var p in snap_players) {
+        if (!this.players[p]) continue;
+        if (!this.players[p].physBody) continue;
+        this.players[p].physBody.SetPositionAndAngle(snap_players[p].position, snap_players[p].lookAngle);
+        this.players[p].angle = snap_players[p].angle;
+        this.players[p].position = this.players[p].physBody.GetPosition();
+        this.players[p].health = snap_players[p].health;
+        this.players[p].killsPerMatch = snap_players[p].killsPerMatch;
+        this.players[p].deathsPerMatch = snap_players[p].deathsPerMatch;
+        this.players[p].activeWeapon = snap_players[p].activeWeapon;
+        this.players[p].buffs = snap_players[p].buffs;
+        if (snap_players[p].id != this.local_player)
+            this.players[p].applyInput(snap_players[p].input, Date.now());
+    }
+    for (var c in snap_collectables) {
+        if (!this.collectables[c]) continue;
+        if (!this.collectables[c].physBody) continue;
+        this.collectables[c].physBody.SetPositionAndAngle(snap_collectables[c].position, snap_collectables[c].angle);
+    }
 };
 GameEngine.prototype.getEntityById = function (id) {
     for (var i = 0; i < this.entities.length; i++) {
@@ -315,7 +355,8 @@ GameEngine.prototype.recordInput = function () {
             gui.hide('PAUSE');
     }
 
-    if (!lp) return;
+    if (!lp || lp.isDead) return;
+
     var pInput = {
         x: 0,
         y: 0,
@@ -379,7 +420,6 @@ GameEngine.prototype.clearInput = function () {
     INPUT.JUMP = false;
 };
 GameEngine.prototype.applyPlayerInput = function (playerID, input, time) {
-    if (!IS_SERVER) return;
     var p = this.players[playerID];
     if (!p) return;
     p.applyInput(input, time);
@@ -403,21 +443,13 @@ GameEngine.prototype.onCollision = function (a, b) {
 
 };
 GameEngine.prototype.collectItem = function (entID, itemID) {
-    console.log('asd');
     var item = this.getEntityById(itemID);
-    if (IS_SERVER) {
-        item.collect(this.getEntityById(entID));
-    } else {
-        SoundManager.worldPlay(item.sfx, item.position, 1);
-        SOCKET.emit('collect_item', entID, itemID);
-    }
+    item.collect(this.getEntityById(entID));
+    if (!IS_SERVER) SoundManager.play(item.sfx, 1);
 };
 GameEngine.prototype.dealDamage = function (entID, damage) {
-    if (IS_SERVER) {
-        this.getEntityById(entID).health -= 100;
-    } else {
-        SOCKET.emit('deal_damage', entID, damage);
-    }
+    if (!IS_SERVER) return;
+    this.getEntityById(entID).health -= damage;
 };
 GameEngine.prototype._simply = function () {
     var game = {
@@ -428,6 +460,9 @@ GameEngine.prototype._simply = function () {
         max_players: this.max_players,
         map_index: this.map_index,
         round_time: this.round_time,
+        server_time: Date.now(),
+        during_match: this.during_match,
+        currentRound: this.currentRound,
         rounds: this.rounds,
         run: this.run,
         fps: this.fps,
@@ -436,6 +471,7 @@ GameEngine.prototype._simply = function () {
         last_tick: this.last_tick,
         entities: [],
         players: {},
+        collectables: {},
         spectators: {}
     };
     this.entities.forEach(function (entity) {
@@ -443,6 +479,7 @@ GameEngine.prototype._simply = function () {
         if (sEntity && sEntity.type != 'static') game.entities.push(sEntity);
     });
     for (var s in this.spectators) game.spectators[s] = this.spectators[s]._simply();
+    for (var c in this.collectables) game.collectables[c] = this.collectables[c]._simply();
     for (var p in this.players) game.players[p] = this.players[p]._simply();
     return game;
 };

@@ -2,6 +2,8 @@
 <head>
     <meta charset="UTF-8">
 
+    <link rel="icon" href="assets/images/icon.ico">
+
     <link rel="stylesheet" href="assets/styles/loaders.css">
     <link rel="stylesheet" href="assets/styles/main.css">
 
@@ -13,6 +15,7 @@
     <script language="javascript" type="text/javascript" src="shared/lib/Box2D.min.js"></script>
     <script language="javascript" type="text/javascript" src="shared/config.js"></script>
     <script language="javascript" type="text/javascript" src="shared/utils.js"></script>
+    <script language="javascript" type="text/javascript" src="shared/classes/Exceptions.js"></script>
     <script language="javascript" type="text/javascript" src="classes/Gui.js"></script>
     <script language="javascript" type="text/javascript" src="client.js"></script>
 
@@ -36,7 +39,7 @@
 <div id="home" class="center-box hidden">
     <div class="center-box-inner">
         <div class="center-box-content">
-
+            <img src="assets/images/keycodes.png">
         </div>
         <div class="center-box-bottom">
             <div class="btn-row">
@@ -207,6 +210,9 @@
     <div class="center-box-inner">
         <div class="center-box-heading">
             <h2 class="game-font">Pause</h2>
+        </div>
+        <div class="center-box-subheading">
+            Round <span></span>
         </div>
         <div class="center-box-subheading">
             <span>Nazwa gracza</span><span>Kills/Deaths</span><span>ARE IN</span>

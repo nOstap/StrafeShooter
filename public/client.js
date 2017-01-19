@@ -87,7 +87,7 @@ function preload() {
         httpGet('/shared/classes/Player.js', _addJsContent);
         httpGet('/shared/classes/Energy.js', _addJsContent);
         httpGet('/shared/classes/Obstacle.js', _addJsContent);
-        httpGet('/shared/classes/items/Colectable.js', function (data) {
+        httpGet('/shared/classes/items/Collectable.js', function (data) {
             _addJsContent(data);
             httpGet('/shared/classes/items/AmmoBox.js', _addJsContent);
             httpGet('/shared/classes/items/DoubleDamage.js', _addJsContent);
@@ -141,7 +141,7 @@ function preload() {
                             RESPAWN: loadSound('assets/sfx/effects/respawn.wav'),
                             BUFF_ADDING: loadSound('assets/sfx/effects/buff_adding.wav'),
                             DEATH: loadSound('assets/sfx/effects/death.wav'),
-                            HIT: loadSound('assets/sfx/effects/hit.wav'),
+                            HURT: loadSound('assets/sfx/effects/hit.wav'),
                             COUNTER: loadSound('assets/sfx/effects/counter.wav')
                         },
                         WEAPONS: {
@@ -171,7 +171,7 @@ function preload() {
                                 HIT: loadSound('assets/sfx/weapons/rocketluncher/hit.wav')
                             },
                             LIGHTGUN: {
-                                FIRE: loadSound('assets/sfx/weapons/lightgun/fire2.wav'),
+                                FIRE: loadSound('assets/sfx/weapons/lightgun/fire.wav'),
                                 START: loadSound('assets/sfx/weapons/start.wav')
                             },
                             SPAS: {

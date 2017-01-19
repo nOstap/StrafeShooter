@@ -9,6 +9,10 @@
       "DRUŻYNY",
       "THE HUNTED"
     ],
+    "GAMEPLAY": {
+      "WILL_START_IN": "Do startu pozostało:",
+      "ROUND": "Runda"
+    },
     "INTERFACE": {
       "AMMO": "Amunicja",
       "ARMOR": "Pancerz",
