@@ -4,10 +4,11 @@ function LightGun(player) {
     Weapon.call(this, player);
     this.id = "LightGun" + _guid();
     this.ammoType = "Light";
-    this.ammunition = 500;
+    this.ammunition = 300;
+    this.ammoFeed = 150;
     this.sfxMode = 1;
-    this.distance = 300;
-    this.delay = 25;
+    this.distance = 200;
+    this.delay = 10;
     this.anim = 'ANIMATIONS.WEAPONS.LIGHTGUN';
     this.sfx = {
         fire: 'SFX.WEAPONS.LIGHTGUN.FIRE',
@@ -27,7 +28,7 @@ function Light(weapon) {
     this.speed = 30;
     this.radius = 0.02;
     this.density = 10;
-    this.damage = 1;
+    this.damage = 1.5;
     this.persistence = 0.0;
     this.restitution = 0;
     this.anim = null;

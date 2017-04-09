@@ -4,7 +4,8 @@ function CurveGun(player) {
     Weapon.call(this, player);
     this.id = "CurveGun" + _guid();
     this.ammoType = "LightBullet";
-    this.ammunition = 50;
+    this.ammunition = 10;
+    this.ammoFeed = 5;
     this.distance = 2000;
     this.delay = 1000;
     this.anim = 'ANIMATIONS.WEAPONS.CURVEGUN';
@@ -24,7 +25,7 @@ function LightBullet(weapon) {
     Bullet.call(this, weapon);
     this.id = "LightBullet" + _guid();
     this.speed = 5;
-    this.damage = 50;
+    this.damage = 35;
     this.density = 4;
     this.radius = 0.02;
     this.persistence = 0.1;

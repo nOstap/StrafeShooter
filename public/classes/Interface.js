@@ -25,14 +25,18 @@ Interface.prototype.showCounter = function (time, topMsg, endMsg) {
     }));
 };
 Interface.prototype.notification = function (msg, lifetime) {
+    var notifyLength = 0;
+    for(var index in this.elements)
+        if(this.elements[index].group == 'notification') notifyLength++;
     this.addElement(new TextElement({
         lifetime: lifetime || 1000,
+        group: 'notification',
         vAlign: RIGHT,
         hAlign: CENTER,
         text: msg,
         fontSize: 20,
         box: [0, 0, 300, 500],
-        position: {x: .92, y: .07}
+        position: {x: .92, y: .07+(notifyLength*.05)}
     }))
 };
 Interface.prototype.create = function () {
@@ -132,7 +136,8 @@ Interface.prototype.removeElement = function (element) {
 var interface = new Interface();
 
 function InterfaceElement(setup) {
-    this.id = this.constructor.name + _guid();
+    this.id = this.constructor.name + _guid() || setup.id;
+    this.group = setup.group || null,
     this.position = setup.position || {x: .5, y: .5};
     this.lifetime = setup.lifetime || null;
     this.data = setup.data || null;

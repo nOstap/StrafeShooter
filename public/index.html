@@ -1,9 +1,17 @@
 <html>
 <head>
     <meta charset="UTF-8">
-
-    <link rel="icon" href="assets/images/icon.ico">
-
+    <title>Strafe Shooter - real time multiplayer shooter.</title>
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="http://strafeshooter.eu" />
+    <meta property="og:title" content="Strafe Shooter" />
+    <meta property="og:description" content="Strafe Shooter is real time multiplayer shooter."/>
+    <meta property="og:image" content="http://strafeshooter.eu/assets/images/fb_share.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="960" />
+    <meta property="og:image:height" content="540" />
+    <meta property="fb:app_id" content="188249101653519" />
+    <link rel="icon" href="assets/images/ico.ico">
     <link rel="stylesheet" href="assets/styles/loaders.css">
     <link rel="stylesheet" href="assets/styles/main.css">
 
@@ -46,6 +54,7 @@
                 <div id="single-play" class="regular-btn gui-btn game-font-dark" inactive="true">Single</div>
                 <div id="display-games-list" class="regular-btn gui-btn game-font-dark">Server list</div>
                 <div id="display-settings" class="regular-btn gui-btn game-font-dark">Settings</div>
+                <div id="display-info" class="regular-btn gui-btn game-font-dark">Info</div>
             </div>
         </div>
     </div>
@@ -109,7 +118,7 @@
             <h2 class="game-font">Server list</h2>
         </div>
         <div class="center-box-subheading">
-            <span>Nazawa hosta</span><span>Status</span><span>Gracze ARE/MAX</span>
+            <span>Nazawa hosta</span><span>Status</span><span>Gracze</span>
         </div>
         <div class="center-box-content">
             <ul>
@@ -118,7 +127,7 @@
         <div class="center-box-bottom">
             <div class="btn-row">
                 <div id="join-game" class="regular-btn gui-btn game-font-dark " inactive="true">Join</div>
-                <div id="start-new" class="regular-btn gui-btn game-font-dark">Start new</div>
+                <!--<div id="start-new" class="regular-btn gui-btn game-font-dark">Start new</div>-->
                 <div id="refresh-list" class="regular-btn gui-btn game-font-dark">Refresh list</div>
                 <div class="regular-btn game-font-dark back gui-btn">Back</div>
             </div>
@@ -200,6 +209,41 @@
 
         </div>
         <div class="center-box-bottom">
+            <div class="btn-row">
+                <div class="regular-btn game-font-dark back gui-btn">Back</div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="info" class="center-box hidden">
+    <div class="center-box-inner">
+        <div class="center-box-heading">
+            <h2 class="game-font">Important informations</h2>
+        </div>
+        <div class="center-box-content">
+            <div class="center-box-subheading">
+               Credits
+            </div>
+            <div>Idea and Project - Adam Ostapkiewicz.</div>
+            <div>Game code - Adam Ostapkiewicz.</div>
+            <div>Sprites & Images - Adam Ostapkiewicz.</div>
+            <a target="_blank" href="https://github.com/nOstap/StrafeShooter/">License & Readme</a>
+
+            <div class="center-box-subheading">
+                Libs
+            </div>
+            <a href="http://box2d.org/">Box2D</a>
+            <a href="https://github.com/hecht-software/box2dweb">Box2DWeb</a>
+            <a href="https://p5js.org/">p5 - processing library</a>
+            <a href="https://nodejs.org">NODE.JS</a>
+            <a href="http://socket.io/">socket.io</a>
+
+        </div>
+        <div class="center-box-bottom">
+            <div>
+                Game is still in development let me know about bugs etc. on
+                <a target="_blank" href="https://github.com/nOstap/StrafeShooter/issues">GitHub</a>
+            </div>
             <div class="btn-row">
                 <div class="regular-btn game-font-dark back gui-btn">Back</div>
             </div>

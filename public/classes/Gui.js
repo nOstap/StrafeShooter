@@ -163,7 +163,7 @@ Gui.prototype.setServerList = function (list) {
         host.status = 'offline';
         host.players = 0;
         server.host = host;
-        server.elm = createElement('li', '<span>No game created / ' + host.name + '</span><span>' + host.status + '</span><span>' + host.players + '/' + host.max_players + '</span>');
+        server.elm = createElement('li', '<span>' + host.name + '</span><span>' + host.status + '</span><span>' + host.players + '/' + host.max_players + '</span>');
         server.socket = io.connect('http://' + host.host + ':' + host.port + '/stats', {reconnection: false});
         server.socket.parent = server;
         server.elm.parent = server;
@@ -173,7 +173,7 @@ Gui.prototype.setServerList = function (list) {
             this.parent.host.online = true;
             this.parent.host.status = 'online';
             this.parent.host.players = data.players + data.spectators;
-            this.parent.element = this.parent.elm.html('<span>' + data.name + ' / ' + this.parent.host.name + '</span><span>' + this.parent.host.status + ' (' + this.parent.host.ping + 'ms)</span><span>' + this.parent.host.players + '/' + this.parent.host.max_players + '</span>');
+            this.parent.element = this.parent.elm.html('<span>' + data.name + '</span><span>' + this.parent.host.status + ' (' + this.parent.host.ping + 'ms)</span><span>' + this.parent.host.players + '/' + this.parent.host.max_players + '</span>');
             this.disconnect();
         });
         server.elm.mousePressed(function () {

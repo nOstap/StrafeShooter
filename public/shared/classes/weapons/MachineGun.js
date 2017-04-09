@@ -4,10 +4,11 @@ function MachineGun(player) {
     Weapon.call(this, player);
     this.id = "MachineGun" + _guid();
     this.ammoType = "RegularBullet";
-    this.ammunition = 200;
-    this.dispersion = 0.06;
+    this.ammunition = 400;
+    this.ammoFeed = 200;
+    this.dispersion = 0.03;
     this.distance = 1000;
-    this.delay = 80;
+    this.delay = 50;
     this.sfx = {
         fire: 'SFX.WEAPONS.MACHINEGUN.FIRE',
         start: 'SFX.WEAPONS.MACHINEGUN.START',

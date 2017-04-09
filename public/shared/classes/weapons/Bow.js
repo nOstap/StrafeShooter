@@ -5,6 +5,7 @@ function Bow(player) {
     this.id = "Bow" + _guid();
     this.ammoType = "Arrow";
     this.ammunition = 20;
+    this.ammoFeed = 10;
     this.distance = 500;
     this.delay = 500;
     this.sfx = {

@@ -10,6 +10,7 @@ function Player(setup) {
     this.position = setup.position ? new Vec2(setup.position.x, setup.position.y) : new Vec2(CFG.MAP_WIDTH * .5, CFG.MAP_HEIGHT * .5);
     this.lookAngle = setup.lookAngle || 0;
     this._spawned = setup._spawned || false;
+    this.isDeadH = setup.isDeadH || false;
     this.team = setup.team || null;
     this.killsPerMatch = setup.killsPerMatch || 0;
     this.deathsPerMatch = setup.deathsPerMatch || 0;
@@ -118,6 +119,8 @@ Player.prototype.draw = function () {
         Animation.animate(bodyAnim, null, this.position.x * SCALE, this.position.y * SCALE, this.lookAngle + HALF_PI);
         Animation.animate(this.weapons[this.activeWeapon].anim, this.input.fire ? 'fire' : 'idle', vec.x * SCALE, vec.y * SCALE, this.lookAngle + HALF_PI);
         Animation.animate(headAnim, null, this.position.x * SCALE, this.position.y * SCALE, this.lookAngle + HALF_PI);
+
+        if(this.getFixedPos())
         push();
         strokeWeight(2);
         stroke('#0075ff');
@@ -132,6 +135,7 @@ Player.prototype.update = function () {
     if (this.health <= 0) {
         if (!this.isDead) {
             this.zIndex = 1;
+            this.isDeadH = true;
             this.physBody.SetActive(false);
             if (IS_SERVER) ioGame.emit('player_death', this.id);
             SoundManager.worldPlay(this.sfx.die, this.position);
@@ -158,14 +162,17 @@ Player.prototype.update = function () {
 };
 Player.prototype.applyInput = function (input, time) {
     if (!this.physBody) return;
-    this.input = input;
+
+    if (input.ready) this.engine.toggleReady(this.id);
+
+    if(this.isDead) return;
 
     var angle = this.angle;
 
-    if (this.input.isWalking && !this.isInAir) {
+    if (input.isWalking && !this.isInAir) {
         if (!IS_SERVER) {
             if (frameCount % 5 === 0) this.path.push({x: this.position.x, y: this.position.y, angle: this.angle});
-            if (this.path.length > 5) this.path.shift();
+            if (this.path.length > 10) this.path.shift();
         }
         if (this.physBody.GetLinearVelocity().Length() > 1) {
             this.animationState = 'walk';
@@ -173,12 +180,12 @@ Player.prototype.applyInput = function (input, time) {
         }
         else this.animationState = 'stand';
 
-        var velocity = new Vec2(this.input.x, this.input.y);
+        var velocity = new Vec2(input.x, input.y);
         velocity.Multiply(this.speed * this.engine.delta);
         velocity.Multiply(this.speed);
 
         angle = Math.atan2(velocity.y, velocity.x);
-        if (!this.input.fire) this.lookAngle = angle;
+        if (!input.fire) this.lookAngle = angle;
         this.physBody.SetLinearVelocity(velocity, this.physBody.GetWorldCenter());
     } else {
         if (!this.isInAir) {
@@ -187,40 +194,41 @@ Player.prototype.applyInput = function (input, time) {
         }
     }
 
-    if (this.input.fire && Math.abs(angle - this.lookAngle) >= HALF_PI) angle = this.lookAngle;
+    if (input.fire && Math.abs(angle - this.lookAngle) >= HALF_PI) angle = this.lookAngle;
     this.angle = angle;
 
     this.physBody.SetAngle(this.lookAngle);
 
-    if (this.input.fire) {
+    if (input.fire) {
         this.weapons[this.activeWeapon].startFire(this);
     } else {
         this.weapons[this.activeWeapon].stopFire(this);
     }
 
-    this.isWalking = this.input.isWalking;
+    this.isWalking = input.isWalking;
 
-    if (this.input.jump && !this.isInAir) this.jump(time);
+    if (input.jump && !this.isInAir) this.jump(time);
 
-    if (this.input.switch_weapon) {
-        if (typeof this.input.switch_weapon == 'string')
-            this.switchWeapon(this.input.switch_weapon);
+    if (input.switch_weapon) {
+        if (typeof input.switch_weapon == 'string')
+            this.switchWeapon(input.switch_weapon);
         else
             this.switchWeapon();
     }
-    if (this.input.ready) {
-        this.isReady = true;
-        if (!IS_SERVER) interface.notification('Ready!', 1000);
-    }
+    this.input = input;
 };
-Player.prototype._reset = function () {
+Player.prototype._reset = function (data) {
     this.maxHealth = CFG.PLAYER.MAX_HEALTH;
     this.health = this.maxHealth;
     this.killsPerMatch = 0;
     this.deathsPerMatch = 0;
+    this.position = data.position;
     this.zIndex = 2;
-    this._spawned = false;
+    this.isDeadH = data.isDeadH || this.isDeadH;
+    this.isSpectator = data.isSpectator || this.isSpectator;
+    this._spawned = data._spawned || this._spawned;
     this.buffs = {};
+    if(this.physBody) this.physBody.SetPosition(data.position);
     for (var wIndex in this.weapons) {
         this.weapons[wIndex]._reset();
     }
@@ -274,6 +282,13 @@ Player.prototype.switchWeapon = function (weapon) {
     this.weapons[this.activeWeapon].activate();
 };
 Player.prototype._simply = function () {
+    var buffs = {}, weapons = {};
+    for(var index in this.buffs) {
+        buffs[index] = this.buffs[index]._simply();
+    }
+    for(var index in this.weapons) {
+        weapons[index] = this.weapons[index]._simply();
+    }
     return {
         id: this.id,
         position: this.position,
@@ -288,6 +303,7 @@ Player.prototype._simply = function () {
         isSpectator: this.isSpectator,
         isWalking: this.isWalking,
         isDead: this.isDead,
+        isDeadH: this.isDeadH,
         isReady: this.isReady,
         angle: this.angle,
         lookAngle: this.lookAngle,
@@ -299,14 +315,7 @@ Player.prototype._simply = function () {
         _spawned: this._spawned,
         team: this.team,
         jumpAt: this.jumpAt,
-        buffs: this.buffs,
-        weapons: {
-            'Spas': this.weapons['Spas']._simply(),
-            'LightGun': this.weapons['LightGun']._simply(),
-            'CurveGun': this.weapons['CurveGun']._simply(),
-            'RocketLuncher': this.weapons['RocketLuncher']._simply(),
-            'Bow': this.weapons['Bow']._simply(),
-            'MachineGun': this.weapons['MachineGun']._simply()
-        }
+        buffs: buffs,
+        weapons: weapons
     }
 };

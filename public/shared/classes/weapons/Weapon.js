@@ -35,7 +35,7 @@ Weapon.prototype._reset = function () {
     this.constructor.call(this, this.player);
 };
 Weapon.prototype.activate = function () {
-    SoundManager.play(this.sfx.start);
+    SoundManager.worldPlay(this.sfx.start);
     if (this.player.input.fire)
         this.startFire();
 };
@@ -51,7 +51,7 @@ Weapon.prototype.fire = function () {
     if (Date.now() - this.reloadTime >= this.delay) {
         this.reloadTime = Date.now();
         if (this.ammunition > 0) {
-            SoundManager.worldPlay(this.sfx.fire, this.position, this.sfxMode);
+            SoundManager.worldPlay(this.sfx.fire, this.player.position, this.sfxMode);
             this.ammunition--;
             for (var i = 0; i < this.bullets; i++) {
                 var bullet = new global[this.ammoType](this);

@@ -13,13 +13,6 @@ function Animation(setup) {
     this.angle = 0;
 }
 
-Animation.prototype.SetPosition = function (pos) {
-    this.position = pos;
-    return this;
-};
-Animation.prototype.SetLoop = function (maxLoops) {
-    this.maxLoops = maxLoops;
-};
 Animation.prototype.addFrame = function (frame) {
     this.frames.push(frame);
     return this;
@@ -54,19 +47,19 @@ Animation.prototype.animate = function (x, y, angle) {
         this.nextStep();
     }
 };
-Animation.prototype.play = function (position, loop) {
-    position.Multiply(SCALE);
-    this.SetPosition(position);
-    this.currentLoop = 0;
-    if (loop)
-        this.SetLoop(loop);
-    renderEngine.addAnimation(this);
-};
+
 Animation.animate = function (animation, animationState, x, y, angle) {
     var animName = animation + (animationState ? '.' + animationState : '');
     var animObj = eval(animName);
     if (!animObj) throw new AnimationNotDeclared('Cannot find animation ' + animName);
     animObj.animate(x, y, angle);
+};
+Animation.prototype.play = function (position, loop) {
+    position.Multiply(SCALE);
+    this.position = position;
+    this.currentLoop = 0;
+    this.maxLoops = loop || 1;
+    renderEngine.addAnimation(this);
 };
 Animation.play = function (animation, position, loop) {
     animation.play(position, loop);
@@ -218,32 +211,28 @@ Animation.load = function () {
                         SPRITES_JSON.frames.exp_8
                     ]
                 })
-            }
-            ,
+            },
             ARROW: {
                 fly: new Animation({
                     frames: [
                         SPRITES_JSON.frames.arrow
                     ]
                 })
-            }
-            ,
+            },
             LIGHTBULLET: {
                 fly: new Animation({
                     frames: [
                         SPRITES_JSON.frames.light_bullet
                     ]
                 })
-            }
-            ,
+            },
             REGULARBULLET: {
                 fly: new Animation({
                     frames: [
                         SPRITES_JSON.frames.regular_bullet
                     ]
                 })
-            }
-            ,
+            },
             SPASBULLET: {
                 fly: new Animation({
                     frames: [
@@ -251,8 +240,7 @@ Animation.load = function () {
                     ]
                 })
             }
-        }
-        ,
+        },
         PLAYER: {
             BODY: [
                 new Animation({
@@ -314,9 +302,24 @@ Animation.load = function () {
                     SPRITES_JSON.frames.dead
                 ]
             })
+        },
+        EFFECTS: {
+            TP: new Animation({
+                stepTime: 50,
+                frames: [
+                    SPRITES_JSON.frames.tp_0,
+                    SPRITES_JSON.frames.tp_1,
+                    SPRITES_JSON.frames.tp_2,
+                    SPRITES_JSON.frames.tp_3,
+                    SPRITES_JSON.frames.tp_4,
+                    SPRITES_JSON.frames.tp_5,
+                    SPRITES_JSON.frames.tp_6,
+                    SPRITES_JSON.frames.tp_7,
+                    SPRITES_JSON.frames.tp_8,
+                    SPRITES_JSON.frames.tp_9
+                ]
+            })
         }
-        ,
-        WORLD: {}
     }
     ;
 };

@@ -30,6 +30,7 @@ var includes =
     fs.readFileSync(__dirname + '/../public/shared/classes/Obstacle.js') +
     fs.readFileSync(__dirname + '/../public/shared/classes/Player.js') +
     fs.readFileSync(__dirname + '/../public/shared/classes/Energy.js') +
+    fs.readFileSync(__dirname + '/../public/shared/classes/Buff.js') +
     fs.readFileSync(__dirname + '/../public/shared/classes/items/Collectable.js') +
     fs.readFileSync(__dirname + '/../public/shared/classes/items/AmmoBox.js') +
     fs.readFileSync(__dirname + '/../public/shared/classes/items/DoubleDamage.js') +

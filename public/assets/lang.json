@@ -11,7 +11,12 @@
     ],
     "GAMEPLAY": {
       "WILL_START_IN": "Do startu pozostało:",
-      "ROUND": "Runda"
+      "ROUND": "Runda",
+      "READY": {
+        "during_match": "Mecz trwa",
+        "true": "gotowy!",
+        "false": "niegotowy!"
+      }
     },
     "INTERFACE": {
       "AMMO": "Amunicja",

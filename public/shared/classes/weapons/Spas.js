@@ -3,6 +3,7 @@ Spas.prototype.constructor = Spas;
 function Spas(player) {
     Weapon.call(this, player);
     this.ammoType = "SpasBullet";
+    this.ammoFeed = 20;
     this.ammunition = 20;
     this.bullets = 7;
     this.dispersion = 0.06;

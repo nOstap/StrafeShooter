@@ -6,12 +6,19 @@ const GAME_STATES = {
         buttons: [
             {id: '#display-games-list', action: 'showServerList'},
             {id: '#display-settings', state: 'SETTINGS'},
+            {id: '#display-info', state: 'INFO'}
+
         ]
+    },
+    INFO: {
+        id: '#info',
+        prevState: 'HOME',
+        buttons: null
     },
     CONNECTION_ERROR: {
         id: '#connection-error',
         prevState: 'HOME',
-        buttons: null,
+        buttons: null
     },
     SERVER_LIST: {
         id: '#games-list',
@@ -34,7 +41,7 @@ const GAME_STATES = {
             '#game-round-time'
         ],
         buttons: [
-            {id: '#create-game', action: 'createGame'},
+            {id: '#create-game', action: 'createGame'}
         ]
     },
     PAUSE: {
@@ -87,6 +94,7 @@ function preload() {
         httpGet('/shared/classes/Player.js', _addJsContent);
         httpGet('/shared/classes/Energy.js', _addJsContent);
         httpGet('/shared/classes/Obstacle.js', _addJsContent);
+        httpGet('/shared/classes/Buff.js', _addJsContent);
         httpGet('/shared/classes/items/Collectable.js', function (data) {
             _addJsContent(data);
             httpGet('/shared/classes/items/AmmoBox.js', _addJsContent);

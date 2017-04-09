@@ -22,6 +22,12 @@ function Entity() {
     this._markToKill = false;
     this.zIndex = 0;
 }
+Entity.prototype._reset = function (data) {
+    this.health = this.maxHealth;
+    this.position = data.position || new Vec2();
+    this._spawned = data._spawned || false;
+    if(this.physBody) this.physBody.SetPosition(this.position);
+};
 Entity.prototype.draw = function () {
 
 };

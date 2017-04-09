@@ -16,6 +16,7 @@ function GameEngine(setup) {
     this.players = {};
     this.spectators = {};
     this.collectables = {};
+    this.during_round = false;
     this.last_tick = Date.now();
     this.mspf = 0;
     this.delta = 0;
@@ -43,8 +44,8 @@ GameEngine.prototype.setup = function (data) {
             if (colType === (CFG.COLLISION_GROUPS.ITEM | CFG.COLLISION_GROUPS.WALL))
                 return;
 
-
             engine.onCollision(uDataA, uDataB);
+
         }
     }, this);
     this.loadMap();
@@ -104,13 +105,16 @@ GameEngine.prototype.update = function () {
                     entity = new global[spawn.entDef.class](spawn.entDef);
                     this.addEntity(entity);
                 }
-                if (entity.physBody) {
-                    entity.health = entity.maxHealth;
-                    entity.position = spawn.position;
-                    entity.physBody.SetPosition(spawn.position);
-                }
-                entity._spawned = true;
+                entity._reset({
+                    position: spawn.position,
+                    _spawned: true,
+                    isDeadH: false
+                });
                 SoundManager.worldPlay('SFX.EFFECTS.RESPAWN', spawn.position);
+                if(!IS_SERVER) {
+                    console.log(ANIMATIONS.EFFECTS.TP);
+                    ANIMATIONS.EFFECTS.TP.play(new Vec2(spawn.position.x, spawn.position.y));
+                }
                 _earse(this._spawnDefer, spawn);
             }
         }
@@ -120,7 +124,8 @@ GameEngine.prototype.update = function () {
         if (flags.ready) this.startMatch();
     } else {
         if (IS_SERVER) {
-            if (Date.now() - this.during_match > this.round_time * 1000 * 60 || flags.roundWin)
+            if (Date.now() - this.during_match > this.round_time * 1000 * 60 ||
+                flags.roundWin || flags.allDie)
                 this.nextRound();
         }
     }
@@ -137,9 +142,10 @@ GameEngine.prototype.setFlags = function () {
         if (flags.ready === null) flags.ready = this.players[p].isReady;
         else
             flags.ready &= this.players[p].isReady;
-        if (this.players[p].isDead) killed++;
+        if (this.players[p].isDeadH) killed++;
     }
     var pl = Object.keys(this.players).length;
+    if (pl == killed && this.during_match) flags.allDie = true;
     if (pl > 1)
         flags.roundWin = ~~(pl - 1 == killed);
     return flags;
@@ -211,14 +217,17 @@ GameEngine.prototype.loadMap = function () {
 };
 GameEngine.prototype.startMatch = function () {
     this.currentRound = 0;
-    this.nextRound();
+    if (IS_SERVER)
+        this.nextRound();
     this.during_match = Date.now();
 };
 GameEngine.prototype.endMatch = function () {
     this.during_match = false;
+    this.currentRound = 0;
     this.clearMap();
     for (var p in this.players) {
         var player = this.players[p];
+        player._reset({position: player.position, isSpectator: true, isReady: false});
         this.spectators[p] = player;
     }
     this.players = {};
@@ -234,8 +243,8 @@ GameEngine.prototype.clearMap = function () {
 };
 GameEngine.prototype.spawnPlayers = function () {
     for (var p in this.players) {
-        this.players[p]._reset();
-        this.spawn(this.players[p].id, CFG.PLAYER.SPAWN_TIME);
+        this.players[p].isDeadH = false;
+        this.spawn(this.players[p].id, CFG.PLAYER.SPAWN_TIME, null, null);
     }
 };
 GameEngine.prototype.spawnItems = function () {
@@ -293,6 +302,15 @@ GameEngine.prototype.removePlayer = function (id) {
     delete this.spectators[id];
     if (Object.keys(this.players).length == 0) this.endMatch();
 };
+GameEngine.prototype.toggleReady = function (playerID) {
+    if (this.during_match) {
+        if (!IS_SERVER)
+            interface.notification(STRINGS[CFG.LANG].GAMEPLAY.READY.during_match);
+        return;
+    }
+    this.players[playerID].isReady = !this.players[playerID].isReady;
+    if (!IS_SERVER) interface.notification(this.players[playerID].displayName + " " + STRINGS[CFG.LANG].GAMEPLAY.READY[this.players[playerID].isReady]);
+};
 GameEngine.prototype.addEntity = function (entity) {
     entity.setup(this);
     this.entities.push(entity);
@@ -314,13 +332,12 @@ GameEngine.prototype.sync = function (data) {
         if (!this.players[p]) continue;
         if (!this.players[p].physBody) continue;
         this.players[p].physBody.SetPositionAndAngle(snap_players[p].position, snap_players[p].lookAngle);
-        this.players[p].angle = snap_players[p].angle;
         this.players[p].position = this.players[p].physBody.GetPosition();
+        this.players[p].angle = snap_players[p].angle;
         this.players[p].health = snap_players[p].health;
         this.players[p].killsPerMatch = snap_players[p].killsPerMatch;
         this.players[p].deathsPerMatch = snap_players[p].deathsPerMatch;
         this.players[p].activeWeapon = snap_players[p].activeWeapon;
-        this.players[p].buffs = snap_players[p].buffs;
         if (snap_players[p].id != this.local_player)
             this.players[p].applyInput(snap_players[p].input, Date.now());
     }
@@ -355,7 +372,7 @@ GameEngine.prototype.recordInput = function () {
             gui.hide('PAUSE');
     }
 
-    if (!lp || lp.isDead) return;
+    if (!lp) return;
 
     var pInput = {
         x: 0,
@@ -369,6 +386,7 @@ GameEngine.prototype.recordInput = function () {
         pointer: new Vec2(0, 0),
         switch_weapon: false
     };
+
     var move_dir = new Vec2(0, 0);
 
     if (INPUT.UP)
@@ -445,11 +463,10 @@ GameEngine.prototype.onCollision = function (a, b) {
 GameEngine.prototype.collectItem = function (entID, itemID) {
     var item = this.getEntityById(itemID);
     item.collect(this.getEntityById(entID));
-    if (!IS_SERVER) SoundManager.play(item.sfx, 1);
 };
 GameEngine.prototype.dealDamage = function (entID, damage) {
     if (!IS_SERVER) return;
-    this.getEntityById(entID).health -= damage;
+    this.getEntityById(entID).health -= Math.floor(damage);
 };
 GameEngine.prototype._simply = function () {
     var game = {

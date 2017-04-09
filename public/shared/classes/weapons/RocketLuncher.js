@@ -4,7 +4,8 @@ function RocketLuncher(player) {
     Weapon.call(this, player);
     this.id = "RocketLuncher" + _guid();
     this.ammoType = "RocketBullet";
-    this.ammunition = 70;
+    this.ammunition = 50;
+    this.ammoFeed = 25;
     this.distance = 3000;
     this.delay = 1000;
     this.anim = 'ANIMATIONS.WEAPONS.ROCKETLUNCHER';
