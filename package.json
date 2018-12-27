@@ -1,5 +1,5 @@
 {
-  "name": "Strafe Shooter",
+  "name": "StrafeShooter",
   "description": "HTML5 p5,socket.io and node based multiplayer game.",
   "version": "0.0.1",
   "main": "public/index.html",
@@ -16,5 +16,10 @@
   },
   "scripts": {
     "start": "nw ."
+  },
+  "dependencies": {
+    "dotenv": "^6.2.0",
+    "express": "^4.16.4",
+    "socket.io": "^2.2.0"
   }
 }

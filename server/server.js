@@ -13,7 +13,7 @@ console.log = function (d) {
 
 var app = express();
 var server = app.listen(process.env.PORT || 3000, function () {
-    var host = server.address().address;
+    var host = process.env.HOST;
     var port = server.address().port;
     console.log('Server started and listening at ' + host + ':' + port);
 });
