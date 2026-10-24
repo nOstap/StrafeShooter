@@ -5,21 +5,25 @@ each step is playable on its own and builds on the previous one.
 
 ## 1. Bots (server-side AI players)
 
-Bots are plain `Player` entities driven by a `BotController` on the server, feeding the same
-`inputQueue` real clients use – no special cases in the simulation, and they work in multiplayer
-too (fill empty slots, `game_bots=N` in `.env`).
+Done – see [Bots in the README](README.md#bots). Bots are plain `Player` entities driven by
+`server/bots/BotManager.js` through `game.queueInput`, the same input queue real clients use, and
+fill empty slots (`game_bots=N` in `.env`).
 
-* **Navigation** – bake a walkability grid from the Tiled map at load (`Walls`, `SeaWalls`,
-  prop boxes). A* on that grid, path smoothing with line-of-sight checks. Cached per map.
-* **Behaviour tree / states**: `Roam` (visit item spawns, prefer the weapon it lacks ammo for),
-  `Hunt` (closest visible enemy, strafe around it – hence the name), `Flee` (health < 30%, head
-  for the nearest LifeBox), `Collect` (DoubleDamage / MaximumDefense when near).
-* **Aim model** – lead the target using its velocity and the bullet speed per weapon; add
-  Gaussian error scaled by difficulty; pick the weapon by range (LightGun close, MachineGun mid,
-  Rocket/Curve long). Rocket splash avoidance (don't fire with a wall closer than 2 m).
-* **Difficulty presets** – `easy / normal / hard / nightmare` controlling reaction time, aim
-  error, awareness radius and ammo awareness.
-* Debug overlay (`CFG.DEBUG`): draw paths, current state, target.
+* ~~**Navigation**~~ – done: 0.5 m clearance grid from `Walls`/`SeaWalls`, Dijkstra flow fields
+  to every spawn point, budgeted A* with string-pulling, feelers, separation and stuck recovery.
+  Cached per map.
+* ~~**Behaviour / states**~~ – done: utility states `ROAM`, `COLLECT`, `HUNT` (engage / chase),
+  `FLEE`, with an always-on combat layer.
+* ~~**Aim model**~~ – done: per-weapon flight tables from the real bullet classes, target lead,
+  Ornstein-Uhlenbeck aim error, weapon choice by expected damage, rocket self-damage guard.
+* ~~**Difficulty presets**~~ – done: `easy / normal / hard / nightmare`.
+* Still open:
+  * Debug overlay (`CFG.DEBUG`) on the client: draw paths, current state, target (the data is
+    already served by `GET /debug/bots`).
+  * Headless bot-vs-bot matches on a fake clock (see §5), so whole matches become reproducible
+    and fast enough for CI.
+  * Item timing (remember when a crate was taken and be there when it respawns).
+  * Team tactics for `CFG.GAME_MODES.TEAMS`.
 
 ## 2. Single-player campaign ("Strafe Tour", Quake 3 style)
 

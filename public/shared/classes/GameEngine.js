@@ -399,10 +399,15 @@ GameEngine.prototype.setReady = function (playerID, isReady) {
     if (!IS_SERVER) interface.notification(player.displayName + " " + STRINGS[CFG.LANG].GAMEPLAY.READY[isReady]);
 };
 GameEngine.prototype.addEntity = function (entity) {
+    // Re-added before the next update purged it (a player re-joining right after endMatch,
+    // or on a client whose hidden tab paused update()): cancel the purge, otherwise it
+    // would erase the fresh players/entityIndex entries and leave a frozen copy behind.
+    var pending = entity._killed ? this._killedEnt.indexOf(entity) : -1;
+    if (pending !== -1) this._killedEnt.splice(pending, 1);
     entity._killed = false;
     entity._markToKill = false;
     entity.setup(this);
-    this.entities.push(entity);
+    if (pending === -1) this.entities.push(entity);
     this.entityIndex[entity.id] = entity;
     if (entity.group) this[entity.group][entity.id] = entity;
     return entity;

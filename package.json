@@ -19,7 +19,8 @@
     "server": "node server/server.js",
     "lobby": "node game-server.js",
     "gen:maps": "python3 tools/gen_map.py all",
-    "gen:tilesets": "python3 tools/gen_tileset.py && node tools/render_svg.js"
+    "gen:tilesets": "python3 tools/gen_tileset.py && node tools/render_svg.js",
+    "test:bots": "node tools/botmatch.js"
   },
   "dependencies": {
     "dotenv": "^6.2.0",

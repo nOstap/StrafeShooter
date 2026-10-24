@@ -214,10 +214,13 @@ function draw() {
         gameEngine.frame();
         var lp = gameEngine.players[gameEngine.local_player];
         if (lp && lp.physBody) CAMERA_CENTER = lp.renderPos();
-        // Look-ahead camera: centred on the player, leaning towards the mouse.
+        // Look-ahead camera: centred on the player, leaning towards the mouse. The lean is
+        // smoothed so a quick flick of the mouse does not yank the whole view.
         var mx = mouseX || width / 2, my = mouseY || height / 2;
-        CAMERA_POS.x = width - (CAMERA_CENTER.x * SCALE + mx);
-        CAMERA_POS.y = height - (CAMERA_CENTER.y * SCALE + my);
+        CAMERA_LOOK.x += (mx - CAMERA_LOOK.x) * CFG.CAMERA_SMOOTHING;
+        CAMERA_LOOK.y += (my - CAMERA_LOOK.y) * CFG.CAMERA_SMOOTHING;
+        CAMERA_POS.x = width - (CAMERA_CENTER.x * SCALE + CAMERA_LOOK.x);
+        CAMERA_POS.y = height - (CAMERA_CENTER.y * SCALE + CAMERA_LOOK.y);
         gameEngine.render();
     }
 }

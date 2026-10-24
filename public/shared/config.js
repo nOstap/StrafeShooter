@@ -77,7 +77,8 @@ const CFG = {
     MAP_MARGIN: 5,
     MAP_TEARING_X: 1,
     MAP_TEARING_Y: -2,
-    MAX_FRAME_RATE: 60,
+    MAX_FRAME_RATE: 240, // draw on every display refresh; the simulation itself is tick based
+    CAMERA_SMOOTHING: 0.15, // fraction of the mouse look-ahead applied per frame
     SYNC_RATE: 1000 / 20.0, // MS between server snapshots
     TICK_RATE: 1000 / 30.0, // MS per fixed simulation tick (same on server and client)
     PHYSICS_HZ: 1.0 / 60.0,
@@ -108,6 +109,7 @@ STRINGS = [];
 SOCKET = null;
 CAMERA_CENTER = {x: 0, y: 0};
 CAMERA_POS = {x: CFG.MAP_WIDTH * .5, y: CFG.MAP_HEIGHT * .5};
+CAMERA_LOOK = {x: 0, y: 0};
 FONT = null;
 MAPS = [
     'test_map',

@@ -66,13 +66,29 @@ game.map = JSON.parse(fs.readFileSync(__dirname + '/../public/assets/' + MAPS[ga
 game.setup();
 console.log('Map: ' + MAPS[game.map_index]);
 
+// Server-side bots (game_bots in .env); nothing is created when it is 0 or unset.
+var BotManager = require('./bots/BotManager.js');
+var botOpts = BotManager.parseEnv(process.env, CFG.MAX_PLAYERS);
+var bots = null;
+if (botOpts.count > 0) {
+    bots = new BotManager(game, botOpts);
+    bots.init();
+    if (botOpts.debug) app.get('/debug/bots', function (req, res) {
+        res.json(bots.debugState());
+    });
+}
+
 function sync_loop() {
     // Compact snapshot; volatile = drop it rather than queue it if the client is behind,
     // a newer one is always on its way.
     if (game) ioGame.volatile.emit('sync_game', game._snapshot());
 }
 function game_loop() {
-    if (game) game.update();
+    if (game) {
+        // Bots queue their input first so it is consumed in this same tick.
+        if (bots) bots.update();
+        game.update();
+    }
 }
 
 Loop.run(CFG.SYNC_RATE, sync_loop);
