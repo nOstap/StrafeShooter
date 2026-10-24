@@ -51,8 +51,10 @@ Last updated on branch `network-stabilization-and-visuals` after the kill feed /
 
 ## Open items / where to continue
 
-- **Cloud Run is still private (403).** Run once (Claude Code's safety filter refused to
-  grant public access itself):
+- **Cloud Run is still private (403).** Revision `strafeshooter-00002-67n` (master as of
+  2026-10-24, kill feed + loot drops, `--timeout=3600` for websockets) is deployed and serves
+  the new client (verified with an identity token). The owner wants it public. Run once
+  (Claude Code's permission classifier blocks granting public access, twice now):
   `gcloud run services add-iam-policy-binding strafeshooter --region europe-central2 --project strafeshooter-ostap --member=allUsers --role=roles/run.invoker`
   Redeploy after code changes: `gcloud run deploy strafeshooter --source . --region europe-central2 --project strafeshooter-ostap`
 - **Unanswered question from the owner**: does the movement still "jump" (judder) after the
