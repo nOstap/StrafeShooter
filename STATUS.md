@@ -1,7 +1,7 @@
 # Session handoff – where we stopped
 
 Last updated on branch `network-stabilization-and-visuals` after the kill feed / scoreboard work
-(`master` is NOT merged yet, no PR opened).
+(merged into `master` and pushed on 2026-10-24; branch and master point at the same commit).
 
 ## Done so far (this branch)
 
