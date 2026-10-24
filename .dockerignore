@@ -1,0 +1,8 @@
+node_modules
+.git
+.idea
+bucket
+tools
+public/assets/svg
+npm-debug.log
+*.md

@@ -29,6 +29,24 @@ follows another player; ← / → or a click switch who you watch.
 `npm start` runs the client as an NW.js desktop app; `node game-server.js` is the public lobby
 server that can fork local game servers via `/local-server`.
 
+## Deploying (Google Cloud Run)
+
+The `Dockerfile` packages the server and client together; game settings are plain
+environment variables (same keys as `server/.env`). The client's host list has a "This server"
+entry (`host: "self"`) that connects to whatever origin served the page, so no address needs to
+be baked in. Game state lives in one process: keep it at a single instance.
+
+```sh
+gcloud run deploy strafeshooter --source . --region europe-central2 \
+  --max-instances 1 --session-affinity --timeout 3600 --memory 512Mi \
+  --set-env-vars game_map=2,game_mode=0,game_bots=3,game_max_players=8
+gcloud run services add-iam-policy-binding strafeshooter --region europe-central2 \
+  --member=allUsers --role=roles/run.invoker     # make it public
+```
+
+With `--min-instances 0` the service costs nothing while idle; the first visitor after an idle
+period waits a few seconds for a cold start and the lobby starts fresh.
+
 ## Netcode
 
 The simulation runs the same fixed 30 Hz tick on the server and on every client

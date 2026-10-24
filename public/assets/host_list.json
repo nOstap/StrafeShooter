@@ -1,5 +1,12 @@
 [
   {
+    "name": "This server",
+    "host": "self",
+    "location": "same origin",
+    "port": "",
+    "max_players": "8"
+  },
+  {
     "name": "Lokalny",
     "host": "localhost",
     "location": "Białystok, PL",

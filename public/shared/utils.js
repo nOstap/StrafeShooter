@@ -135,8 +135,14 @@ _findByKey = function (array, key, value, forceArrayOut) {
     if (out.length > 1 || forceArrayOut) return out;
     else return out[0];
 };
+// socket.io URL for a host list entry; host "self" means the server that served this page
+// (cloud deployments: same origin, https, no fixed port).
+_serverUrl = function (host, namespace) {
+    if (host.host === 'self') return location.protocol + '//' + location.host + namespace;
+    return 'http://' + host.host + ':' + host.port + namespace;
+};
 _setupSocket = function (server) {
-    SOCKET = io.connect('http://' + server.host.host + ':' + server.host.port + '/game', {
+    SOCKET = io.connect(_serverUrl(server.host, '/game'), {
         query: 'displayName=' + gui.game_settings.player_name +
         '&body=' + gui.game_settings.player_body +
         '&head=' + gui.game_settings.player_head +
