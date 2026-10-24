@@ -113,7 +113,8 @@ ioGame.on('connection', function (socket) {
             id: clientID,
             displayName: displayName,
             head: Math.max(0, Math.min(2, parseInt(data.head, 10) || 0)),
-            body: Math.max(0, Math.min(1, parseInt(data.body, 10) || 0))
+            body: Math.max(0, Math.min(1, parseInt(data.body, 10) || 0)),
+            skin: Player.validSkin(data.skin)
         });
         game.addSpectator(player);
         socket.emit('connected', game._simply());

@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 /**
- * Rasterize the biome tileset SVGs to PNG with headless Chromium (SVG filters included).
+ * Rasterize the generated SVG sheets (biome tilesets, characters) to PNG with headless
+ * Chromium (SVG filters included).
  *
  *   node tools/render_svg.js                  # all public/assets/svg/*.svg
  *   node tools/render_svg.js map_sprites_desert.svg
+ *   node tools/render_svg.js characters.svg
  *
  * Output goes to public/assets/images/<name>.png. Requires playwright (npm i -D playwright
  * or a globally installed copy via NODE_PATH).

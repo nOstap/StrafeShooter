@@ -79,6 +79,27 @@ swapping its tileset image. Multi-tile props (boat 2x4, crashed plane 4x3, destr
 `tools/gen_map.py` (`PROPS`) with matching collision boxes. Add a preset to `PRESETS` to get a
 new map; change its `seed` to roll a new layout.
 
+## Characters
+
+Six arena characters, each with its own helmet, armour, back gear and animations (idle
+breathing, firing recoil, 4-frame walk, stand, jump, corpse): **Viper** (venom-green flanker
+with a fin-crested helmet and crossed blades), **Ghost** (white hooded recon with a cloak and
+cyan twin eyes), **Rook** (heavy gunner: block helmet with an orange T-visor, hazard
+pauldrons, ammo drum), **Blitz** (blue power armour, gold dome visor, jetpack), **Nova**
+(purple cyborg with a cyclops lens and a chrome arm) and **Talon** (crimson horned berserker
+with spiked pauldrons). Bots wear them in roster order (bot N gets character (N - 1) % 6);
+players pick one under Settings > Character ("Classic" keeps the old head/body sprites).
+
+The artwork is procedural: `tools/gen_characters.py` holds the palettes and shapes and writes
+`public/assets/svg/characters.svg` plus the frame atlas `public/assets/characters.json`
+(TexturePacker format, frames named `<key>_body_idle_0`, `<key>_legs_walk_2`, ...). The
+character list itself (names, order) lives in `CFG.CHARACTERS` in `public/shared/config.js`
+and must match the generator's order.
+
+```sh
+npm run gen:characters  # regenerate the SVG + JSON and rasterize public/assets/images/characters.png
+```
+
 ## Bots
 
 Bots are ordinary `Player` entities that live on the server (`server/bots/`). Every tick the

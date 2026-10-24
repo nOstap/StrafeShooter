@@ -67,6 +67,7 @@ const GAME_STATES = {
             '#player-name',
             '#player-head',
             '#player-body',
+            '#player-skin',
             '#mute-sound',
             '#mute-sound-effects',
             '#full-screen'
@@ -121,12 +122,14 @@ function preload() {
     Gui.setLoadingInfo('Loading configuration');
     STRINGS = loadJSON('/assets/lang.json');
     SPRITES_JSON = loadJSON('/assets/sprites.json');
+    CHARACTERS_JSON = loadJSON('/assets/characters.json');
     INTERFACE_SPRITES_JSON = loadJSON('/assets/interface_sprites.json');
     HOST_LIST = loadJSON('/assets/host_list.json');
     FONT = loadFont('/assets/fonts/Chewy.ttf');
 
     Gui.setLoadingInfo('Loading sprites');
-    SPRITE_SHEET = loadImage('/assets/images/sprites.png', function () {
+    CHARACTER_SPRITE_SHEET = loadImage('/assets/images/characters.png');
+    SPRITE_SHEET =loadImage('/assets/images/sprites.png', function () {
         INTERFACE_SPRITE_SHEET = loadImage('/assets/images/interface_sprites.png', function () {
             TILESET_FILES.forEach(function (file) {
                 TILESET_IMAGES[file] = loadImage('/assets/' + file);

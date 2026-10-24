@@ -50,6 +50,7 @@ function Player(setup) {
     this.animationState = setup.animationState || 'stand';
     this.body = setup.body || 0;
     this.head = setup.head || 0;
+    this.skin = Player.validSkin(setup.skin); // arena character index, null = classic head/body
     this.sfx = {
         jump: 'SFX.EFFECTS.JUMP',
         walk: 'SFX.EFFECTS.WALK',
@@ -62,6 +63,12 @@ function Player(setup) {
 }
 
 Player.JUMP_TICKS = Math.round(CFG.JUMP_TIME / CFG.TICK_RATE);
+
+Player.validSkin = function (skin) {
+    if (skin === null || skin === undefined || skin === '') return null;
+    skin = parseInt(skin, 10);
+    return skin >= 0 && skin < CFG.CHARACTERS.length ? skin : null;
+};
 
 // The part of an input that describes held state; one-shot actions are stripped so a
 // repeated / interpolated input never re-triggers a jump or weapon switch.
@@ -205,8 +212,10 @@ Player.prototype.draw = function () {
     var legsAnim = 'ANIMATIONS.PLAYER.LEGS';
     var deadAnim = 'ANIMATIONS.PLAYER.DEAD';
     var footStepAnim = 'ANIMATIONS.PLAYER.FOOTSTEP';
+    var skin = this.skin !== null && ANIMATIONS.PLAYER.SKINS ? ANIMATIONS.PLAYER.SKINS[this.skin] : null;
     if (this.isDead) {
-        Animation.animate(deadAnim, null, px, py);
+        if (skin) skin.dead.animate(px, py);
+        else Animation.animate(deadAnim, null, px, py);
         return;
     }
     this.path.forEach(function (val) {
@@ -225,10 +234,16 @@ Player.prototype.draw = function () {
         scale(1 + lift * 0.18);
         translate(-px, -py);
     }
-    Animation.animate(legsAnim, this.animationState, px, py, this.angle + HALF_PI);
-    Animation.animate(bodyAnim, null, px, py, this.lookAngle + HALF_PI);
+    if (skin) {
+        (skin.legs[this.animationState] || skin.legs.stand).animate(px, py, this.angle + HALF_PI);
+        skin.body[this.input.fire ? 'fire' : 'idle'].animate(px, py, this.lookAngle + HALF_PI);
+    } else {
+        Animation.animate(legsAnim, this.animationState, px, py, this.angle + HALF_PI);
+        Animation.animate(bodyAnim, null, px, py, this.lookAngle + HALF_PI);
+    }
     Animation.animate(this.weapons[this.activeWeapon].anim, this.input.fire ? 'fire' : 'idle', vec.x * SCALE, vec.y * SCALE, this.lookAngle + HALF_PI);
-    Animation.animate(headAnim, null, px, py, this.lookAngle + HALF_PI);
+    if (skin) skin.head.animate(px, py, this.lookAngle + HALF_PI);
+    else Animation.animate(headAnim, null, px, py, this.lookAngle + HALF_PI);
     pop();
 
     var sinceHit = Date.now() - this._hitAt;
@@ -536,6 +551,7 @@ Player.prototype._simply = function () {
         activeWeapon: this.activeWeapon,
         head: this.head,
         body: this.body,
+        skin: this.skin,
         _spawned: this._spawned,
         team: this.team,
         jumpAt: this.jumpAt,

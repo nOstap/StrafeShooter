@@ -298,6 +298,9 @@ form.form {
     background-image: url(../images/sprites.png);
 
 }
+#player-preview .character {
+    background-image: url(../images/characters.png);
+}
 /* In-game: custom crosshair instead of the OS cursor */
 body.in-game, body.in-game canvas {
     cursor: none;

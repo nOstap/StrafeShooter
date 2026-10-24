@@ -58,6 +58,7 @@ const CFG = {
     '"mute_sound_effects":false,' +
     '"player_head":0,' +
     '"player_body":0,' +
+    '"player_skin":-1,' +
     '"full_screen":false' +
     '}',
     PLAYER: {
@@ -97,6 +98,15 @@ const CFG = {
         MAX: 1500,
         ENABLED: true
     },
+    // Arena characters; the skin index is the position here. Artwork: tools/gen_characters.py (same order).
+    CHARACTERS: [
+        {key: 'viper', name: 'Viper', bio: 'Fast, venomous flanker who never takes the front door.'},
+        {key: 'ghost', name: 'Ghost', bio: 'Silent recon specialist; you only notice him when it is too late.'},
+        {key: 'rook', name: 'Rook', bio: 'Walking fortress of a heavy gunner who loves a long fight.'},
+        {key: 'blitz', name: 'Blitz', bio: 'Jump-jet power-armour soldier; first in, loudest out.'},
+        {key: 'nova', name: 'Nova', bio: 'Half-machine cyborg who calculates every shot twice.'},
+        {key: 'talon', name: 'Talon', bio: 'Horned berserker from the arena pits; charges anything that moves.'}
+    ],
     MAX_ENTITIES: 5000,
     MAP_WIDTH: 100,
     MAP_HEIGHT: 100,
@@ -132,8 +142,10 @@ TILESET_FILES = [
 ];
 HOST_LIST = [];
 SPRITES_JSON = {};
+CHARACTERS_JSON = {};
 INTERFACE_SPRITES_JSON = {};
 SPRITE_SHEET = {};
+CHARACTER_SPRITE_SHEET = {};
 INTERFACE_SPRITE_SHEET = {};
 ANIMATIONS = {};
 

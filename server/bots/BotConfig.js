@@ -83,6 +83,7 @@ var WEAPON_PREF = {RocketLuncher: 1.0, Bow: 0.9, CurveGun: 0.85, LightGun: 0.8, 
 var PREFERRED_RANGE = {LightGun: 4.5, Spas: 4, Bow: 7, RocketLuncher: 9, MachineGun: 12, CurveGun: 12};
 var FIRE_TOLERANCE_DEG = {LightGun: 6, MachineGun: 6, Spas: 8, Bow: 3, RocketLuncher: 4, CurveGun: 6};
 var SPLASH_DPS = {RocketLuncher: 15};
+// The first six are the arena characters (CFG.CHARACTERS); bot N wears character (N - 1) % 6.
 var NAMES = ['Viper', 'Ghost', 'Rook', 'Blitz', 'Nova', 'Talon', 'Havoc', 'Echo', 'Jinx', 'Raven'];
 
 var PRESETS = {

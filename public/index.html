@@ -68,6 +68,7 @@
                 <div class="player-element body"></div>
                 <div class="player-element weapon"></div>
                 <div class="player-element head"></div>
+                <div class="player-element character hidden"></div>
             </div>
         </div>
         <div class="center-box-content">
@@ -75,6 +76,12 @@
                 <div class="input-container">
                     <label for="player-name">Player name</label>
                     <input type="text" required name="player_name" value="NoNamePlayer" id="player-name">
+                </div>
+                <div class="input-container">
+                    <label for="player-skin">Character</label>
+                    <select id="player-skin" name="player_skin" change="skin">
+                        <option value="-1" selected>Classic</option>
+                    </select>
                 </div>
                 <div class="input-container">
                     <label for="player-head">Head</label>

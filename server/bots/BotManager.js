@@ -104,7 +104,8 @@ BotManager.prototype.addBot = function () {
         id: id,
         displayName: '[BOT] ' + BotConfig.NAMES[(serial - 1) % BotConfig.NAMES.length],
         head: (serial - 1) % 3,
-        body: (serial - 1) % 2
+        body: (serial - 1) % 2,
+        skin: (serial - 1) % CFG.CHARACTERS.length
     });
     game.addSpectator(p);
     // Clients ignore player_joined_match for ids they have no spectator for.

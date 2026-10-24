@@ -139,7 +139,8 @@ _setupSocket = function (server) {
     SOCKET = io.connect('http://' + server.host.host + ':' + server.host.port + '/game', {
         query: 'displayName=' + gui.game_settings.player_name +
         '&body=' + gui.game_settings.player_body +
-        '&head=' + gui.game_settings.player_head
+        '&head=' + gui.game_settings.player_head +
+        '&skin=' + (gui.game_settings.player_skin != null ? gui.game_settings.player_skin : -1)
     });
     SOCKET.on('connected', function (data) {
         console.log('You\'r connected to game ' + data.id + ' as ' + SOCKET.id);

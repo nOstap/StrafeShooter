@@ -333,4 +333,38 @@ Animation.load = function () {
         }
     }
     ;
+    ANIMATIONS.PLAYER.SKINS = Animation.loadSkins();
+};
+// One set of animations per arena character (characters.png, see tools/gen_characters.py).
+Animation.loadSkins = function () {
+    var skins = [];
+    if (!CHARACTERS_JSON || !CHARACTERS_JSON.frames) return skins;
+    CFG.CHARACTERS.forEach(function (character) {
+        var f = function (name) {
+            var frame = CHARACTERS_JSON.frames[character.key + '_' + name];
+            if (!frame) throw new AnimationNotDeclared('Cannot find character frame ' + character.key + '_' + name);
+            return frame;
+        };
+        var anim = function (names, stepTime) {
+            return new Animation({
+                sheet: CHARACTER_SPRITE_SHEET,
+                stepTime: stepTime,
+                frames: names.map(f)
+            });
+        };
+        skins.push({
+            body: {
+                idle: anim(['body_idle_0', 'body_idle_1'], 550),
+                fire: anim(['body_fire_0', 'body_fire_1'], 70)
+            },
+            head: anim(['head']),
+            legs: {
+                walk: anim(['legs_walk_0', 'legs_walk_1', 'legs_walk_2', 'legs_walk_3'], 110),
+                stand: anim(['legs_stand']),
+                jump: anim(['legs_jump'])
+            },
+            dead: anim(['dead'])
+        });
+    });
+    return skins;
 };

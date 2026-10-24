@@ -53,7 +53,40 @@ function Gui() {
     select('#player-body').changed(this.updatePreview);
     select('#player-head').changed(this.updatePreview);
 
+    var skinSelect = select('#player-skin');
+    CFG.CHARACTERS.forEach(function (character, index) {
+        var option = createElement('option', character.name);
+        option.attribute('value', index);
+        option.attribute('title', character.bio);
+        option.parent(skinSelect);
+    });
+    skinSelect.changed(function () {
+        gui.updateCharacterPreview(this.value());
+    });
+    this.updateCharacterPreview(this.game_settings.player_skin);
 }
+// Settings preview: an arena character replaces the classic head / body / weapon sprites.
+Gui.prototype.updateCharacterPreview = function (value) {
+    var pPreview = select('#player-preview'),
+        skin = parseInt(value, 10),
+        character = select('.character', pPreview),
+        classic = [select('.head', pPreview), select('.body', pPreview), select('.weapon', pPreview)];
+    var obj = skin >= 0 && skin < CFG.CHARACTERS.length ? CHARACTERS_JSON.frames[CFG.CHARACTERS[skin].key + '_portrait'] : null;
+    if (!obj) {
+        character.addClass('hidden');
+        classic.forEach(function (el) {
+            el.removeClass('hidden');
+        });
+        return;
+    }
+    classic.forEach(function (el) {
+        el.addClass('hidden');
+    });
+    character.removeClass('hidden');
+    character.style('width', obj.frame.w + 'px');
+    character.style('height', obj.frame.h + 'px');
+    character.style('background-position', -obj.frame.x + 'px ' + -obj.frame.y + 'px');
+};
 Gui.prototype.updatePreview = function (element, value, forceName) {
     var pPreview = select('#player-preview'),
         head = select('.head', pPreview),
