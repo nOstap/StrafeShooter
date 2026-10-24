@@ -298,3 +298,14 @@ form.form {
     background-image: url(../images/sprites.png);
 
 }
+/* In-game: custom crosshair instead of the OS cursor */
+body.in-game, body.in-game canvas {
+    cursor: none;
+}
+#crosshair {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    pointer-events: none;
+    z-index: 5;
+}

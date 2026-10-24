@@ -47,10 +47,24 @@ _profile = function (f) {
     return out;
 };
 _earse = function (array, item) {
-    index = array.indexOf(item);
+    var index = array.indexOf(item);
+    if (index === -1) return false;
     array.splice(index, 1);
-    item = null;
     return true;
+};
+_round = function (value) {
+    return Math.round(value * 1000) / 1000;
+};
+_lerpAngle = function (a, b, t) {
+    var diff = b - a;
+    while (diff > Math.PI) diff -= TWO_PI;
+    while (diff < -Math.PI) diff += TWO_PI;
+    return a + diff * t;
+};
+_escapeHtml = function (str) {
+    return String(str).replace(/[&<>"']/g, function (c) {
+        return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c];
+    });
 };
 
 _superRandom = function (min, max) {
@@ -128,7 +142,15 @@ _setupSocket = function (server) {
         '&head=' + gui.game_settings.player_head
     });
     SOCKET.on('connected', function (data) {
-        console.log('You\'r connected to game ' + data.id);
+        console.log('You\'r connected to game ' + data.id + ' as ' + SOCKET.id);
+        // A reconnect (network hiccup) gives us a fresh socket id and a fresh game state:
+        // drop the old simulation completely instead of layering a second one on top.
+        if (gameEngine) {
+            gameEngine.halt();
+            interface._clear();
+            particles.clear();
+            renderEngine.buffered_animations = [];
+        }
         gui.hide();
         gui.hideLoader();
         gui.setPlayerList(data);
@@ -145,6 +167,7 @@ _setupSocket = function (server) {
     });
     SOCKET.on('player_joined_game', function (player_info) {
         console.log('New player joined to game ' + player_info.id);
+        if (player_info.id == SOCKET.id) return;
         var spectator = new Player(player_info);
         gameEngine.addSpectator(spectator);
         gui.setPlayerList(gameEngine);
@@ -154,25 +177,58 @@ _setupSocket = function (server) {
         gameEngine.joinMatch(player_info.id, player_info);
         gui.setPlayerList(gameEngine);
     });
-    SOCKET.on('spawn_defer', function (data) {
-        console.log('Spawn arrived!');
-        for (var s in data) {
-            data[s].startTime = Date.now();
+    SOCKET.on('spawn_defer', function (spawn) {
+        // Server sends the delay that is left; start our own timer on arrival.
+        spawn.startTime = Date.now();
+        gameEngine._spawnDefer.push(spawn);
+    });
+    SOCKET.on('player_death', function (data) {
+        var victim = gameEngine.players[data.id];
+        var killer = data.killer && gameEngine.players[data.killer];
+        if (victim) {
+            victim.health = Math.min(victim.health, 0);
+            interface.notification(killer ? killer.displayName + ' fragged ' + victim.displayName : victim.displayName + ' died', 2500);
         }
-        gameEngine._spawnDefer = data;
+        gui.setPlayerList(gameEngine);
     });
-    SOCKET.on('player_death', function (id) {
-       interface.notification('Player '+ gameEngine.players[id].displayName+' death!');
-       gui.setPlayerList(gameEngine);
+    SOCKET.on('player_ready', function (data) {
+        gameEngine.setReady(data.id, data.isReady);
+        gui.setPlayerList(gameEngine);
     });
-    SOCKET.on('next_round', function () {
-        gameEngine.nextRound();
+    SOCKET.on('item_collected', function (data) {
+        gameEngine.onItemCollected(data.item, data.player);
     });
-    SOCKET.on('server_time', function (data) {
-        gameEngine.server_time = data;
+    SOCKET.on('next_round', function (round) {
+        gameEngine.nextRound(round);
+    });
+    SOCKET.on('match_ended', function () {
+        if (gameEngine.during_match) gameEngine.endMatch();
     });
     SOCKET.on('sync_game', function (data) {
         gameEngine.sync(data);
+    });
+    SOCKET.on('pong_check', function (sent) {
+        gameEngine.ping = Date.now() - sent;
+    });
+    if (window._pingTimer) clearInterval(window._pingTimer);
+    window._pingTimer = setInterval(function () {
+        if (SOCKET && SOCKET.connected) SOCKET.emit('ping_check', Date.now());
+    }, 1000);
+    SOCKET.on('disconnect', function (reason) {
+        console.log('Socket disconnected: ' + reason);
+        // Freeze the local simulation so the player sees they are offline instead of
+        // running around in a world nobody else can see.
+        if (gameEngine && gameEngine.run) {
+            gameEngine.run = false;
+            gui.showLoader();
+            select('#loading-text') && Gui.setLoadingInfo('Connection lost (' + reason + '), reconnecting');
+        }
+    });
+    SOCKET.on('reconnect_failed', function () {
+        gui.hideLoader();
+        if (gameEngine) gameEngine.halt();
+        gui.hide();
+        gui.show('CONNECTION_ERROR');
     });
     SOCKET.on('connect_error', function () {
         console.log(STRINGS[CFG.LANG].CONNECTION.FILED);

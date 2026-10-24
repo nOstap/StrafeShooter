@@ -9,6 +9,8 @@ function RocketLuncher(player) {
     this.distance = 3000;
     this.delay = 1000;
     this.anim = 'ANIMATIONS.WEAPONS.ROCKETLUNCHER';
+    this.muzzle = [255, 150, 60];
+    this.recoil = 8;
     this.sfx = {
         fire: 'SFX.WEAPONS.ROCKETLUNCHER.FIRE',
         start: 'SFX.WEAPONS.ROCKETLUNCHER.START',
@@ -30,22 +32,28 @@ function RocketBullet(weapon) {
     this.damage = 25;
     this._dieAtHit = true;
     this.restitution = 0;
+    this.trail = 'rocket';
+    this.glow = {size: 60, color: [255, 170, 60], alpha: 0.6};
     this.anim = 'ANIMATIONS.BULLETS.ROCKET';
     this.energy = new Array(CFG.EXPLOSION_PARTICLES);
 }
 
 RocketBullet.prototype.kill = function () {
+    if (!this.physBody) return;
     if (this.energy.length) {
         var x, y, eL = this.energy.length;
         for (var i = 0; i < eL; i++) {
-            x = Math.cos(i + eL / TWO_PI);
-            y = Math.sin(i + eL / TWO_PI);
-            this.energy[i].release(new Vec2(x, y));
+            // Evenly spaced ring of shrapnel (was cos(i + eL / 2PI): a lopsided spiral).
+            x = Math.cos(i / eL * TWO_PI);
+            y = Math.sin(i / eL * TWO_PI);
+            if (this.energy[i]) this.energy[i].release(new Vec2(x, y));
         }
     }
     if (!IS_SERVER) {
         eval(this.anim).explode.play(this.position.Copy());
         SoundManager.worldPlay(this.weapon.sfx.hit, this.position.Copy());
+        particles.explosion(this.position.x, this.position.y);
+        renderEngine.shakeAt(this.position.x, this.position.y, 22);
     }
     physicsEngine.removeBody(this.physBody);
     this.physBody = null;

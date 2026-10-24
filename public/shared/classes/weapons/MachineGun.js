@@ -18,6 +18,8 @@ function MachineGun(player) {
         idle: null
     };
     this.anim = 'ANIMATIONS.WEAPONS.MACHINEGUN';
+    this.muzzle = [255, 200, 90];
+    this.recoil = 1.5;
 }
 
 RegularBullet.prototype = Object.create(Bullet.prototype);
@@ -31,4 +33,5 @@ function RegularBullet(weapon) {
     this.persistence = 0.5;
     this.restitution = 0.5;
     this.damage = 1;
+    this.tracer = {color: '255,210,120', width: 3, length: 0.9};
 }

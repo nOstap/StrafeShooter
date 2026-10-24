@@ -23,7 +23,7 @@ Energy.prototype.setup = function (engine) {
             elementType: CFG.COLLISION_GROUPS.ENERGY
         },
         categoryBits: CFG.COLLISION_GROUPS.ENERGY,
-        maskBits: CFG.COLLISION_GROUPS.WALL | CFG.COLLISION_GROUPS.PLAYER | CFG.COLLISION_GROUPS.ITEM,
+        maskBits: CFG.COLLISION_GROUPS.WALL | CFG.COLLISION_GROUPS.PLAYER,
         damping: 5,
         bullet: true
     };
@@ -42,16 +42,17 @@ Energy.prototype.release = function (force) {
 }
 Energy.prototype.colide = function (body) {
     if (!this.physBody) return;
-    var dmgBuf = this.parent.weapon.player.getBuff('damage');
+    var dmgBuf = this.parent.weapon.player.getBuff('DoubleDamageBuff');
     var damage = this.damage;
     if (dmgBuf != null)
         damage *= dmgBuf.multipler;
     if (body.health != null)
-        this.engine.dealDamage(body.id, damage);
-    SoundManager.worldPlay(body.sfx.hurt, this.position, 1);
+        this.engine.dealDamage(body.id, damage, this.parent.weapon.player.id);
+    if (body.sfx && body.sfx.hurt) SoundManager.worldPlay(body.sfx.hurt, this.position, 1);
     if(body.isPlayer) this._markToKill = true;
 };
 Energy.prototype.update = function () {
+    if (!this.physBody) return;
     if (this.physBody.IsActive())
     if (this.lifetime != null) {
         if (Date.now() - this.createdAt >= this.lifetime) {

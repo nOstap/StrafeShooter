@@ -10,6 +10,7 @@ function LightGun(player) {
     this.distance = 200;
     this.delay = 10;
     this.anim = 'ANIMATIONS.WEAPONS.LIGHTGUN';
+    this.muzzle = [98, 252, 255];
     this.sfx = {
         fire: 'SFX.WEAPONS.LIGHTGUN.FIRE',
         start: 'SFX.WEAPONS.LIGHTGUN.START',
@@ -31,19 +32,28 @@ function Light(weapon) {
     this.damage = 1.5;
     this.persistence = 0.0;
     this.restitution = 0;
+    this.impactColor = [98, 252, 255];
     this.anim = null;
 }
 
 Light.prototype.draw = function () {
-    var op = this.frontBullet.position.Copy(), cp = this.position.Copy();
-    cp.Multiply(SCALE);
-    op.Multiply(SCALE);
-    push();
-    stroke('#62fcff');
-    strokeWeight(5);
-    line(cp.x, cp.y, op.x, op.y);
-    stroke(255);
-    strokeWeight(2);
-    line(cp.x, cp.y, op.x, op.y);
-    pop();
+    var front = this.frontBullet && this.frontBullet.physBody ? this.frontBullet : this;
+    var op = front.renderPos(), cp = this.renderPos();
+    var ctx = drawingContext;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(98,252,255,0.25)';
+    ctx.lineWidth = 14;
+    ctx.beginPath();
+    ctx.moveTo(cp.x * SCALE, cp.y * SCALE);
+    ctx.lineTo(op.x * SCALE, op.y * SCALE);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(98,252,255,0.9)';
+    ctx.lineWidth = 5;
+    ctx.stroke();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
 };

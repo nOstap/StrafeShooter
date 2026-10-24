@@ -37,6 +37,7 @@
     </div>
     <p id="loading-text" class="game-font"><span id="loading-info">Loading interface</span>...</p>
 </div>
+<img id="crosshair" src="assets/images/viewfinder.png" alt="" style="display:none">
 <div id="loader" class="loader dark hidden">
     <div class="loader-inner ball-scale-multiple">
         <div></div>
@@ -167,7 +168,10 @@
                 <div class="input-container">
                     <label for="game-map">Map</label>
                     <select id="game-map" required name="game_map">
-                        <option value="0">Test map</option>
+                        <option value="0">Island (classic)</option>
+                        <option value="1">Arena (small)</option>
+                        <option value="2">Desert Outpost (medium)</option>
+                        <option value="3">Frozen Lake (large)</option>
                     </select>
                 </div>
                 <div class="input-container">

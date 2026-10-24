@@ -110,13 +110,37 @@ Interface.prototype.create = function () {
         interface.addElement(gel);
         interface.addElement(tel);
     }
-    // interface.addElement(fpsMeater);
+    var netInfo = new TextElement({
+        text: function () {
+            return 'FPS ' + ~~frameRate() + '   PING ' + (gameEngine.ping != null ? gameEngine.ping + 'ms' : '-');
+        },
+        position: {x: .01, y: .03},
+        fontSize: 16,
+        border: 3,
+        hAlign: LEFT,
+        vAlign: CENTER,
+        lifetime: null
+    });
+    var score = new TextElement({
+        text: function () {
+            var me = gameEngine.players[gameEngine.local_player];
+            var round = gameEngine.during_match ? 'Round ' + gameEngine.currentRound + '/' + gameEngine.rounds : 'Warm-up - press 3 when ready';
+            return round + (me ? '    K ' + me.killsPerMatch + ' / D ' + me.deathsPerMatch : '');
+        },
+        position: {x: .5, y: .04},
+        fontSize: 24,
+        border: 4,
+        hAlign: CENTER,
+        vAlign: CENTER,
+        lifetime: null
+    });
+    interface.addElement(netInfo);
+    interface.addElement(score);
     interface.addElement(gplayerHealth);
     interface.addElement(tplayerHealth);
 };
 Interface.prototype.draw = function () {
     push();
-    translate(-CAMERA_POS.x, -CAMERA_POS.y);
     for (var eid in this.elements) {
         var el = this.elements[eid];
         el.draw();
@@ -125,7 +149,7 @@ Interface.prototype.draw = function () {
     pop();
 };
 Interface.prototype._clear = function () {
-    Interface.call(this, new Interface);
+    this.elements = {};
 };
 Interface.prototype.addElement = function (element) {
     this.elements[element.id] = element;

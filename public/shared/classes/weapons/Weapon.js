@@ -19,6 +19,7 @@ function Weapon(player, setup) {
         idle: null
     };
     this.sfxMode = 0;
+    this.muzzle = null; // [r, g, b] muzzle flash colour, null = none
     this.timeout = setup.timeout || null;
     this.delay = null;
     this.reloadTime = Date.now();
@@ -53,6 +54,13 @@ Weapon.prototype.fire = function () {
         if (this.ammunition > 0) {
             SoundManager.worldPlay(this.sfx.fire, this.player.position, this.sfxMode);
             this.ammunition--;
+            if (!IS_SERVER && this.muzzle) {
+                var fix = this.player.getShootFix();
+                var mx = this.player.position.x + fix.x + Math.cos(this.player.lookAngle) * 0.25,
+                    my = this.player.position.y + fix.y + Math.sin(this.player.lookAngle) * 0.25;
+                particles.muzzle(mx, my, this.player.lookAngle, this.muzzle);
+                if (this.player.id == gameEngine.local_player) renderEngine.shake(this.recoil || 0);
+            }
             for (var i = 0; i < this.bullets; i++) {
                 var bullet = new global[this.ammoType](this);
                 if (this.player.engine.entities.indexOf(this.last_bullet) == -1) this.last_bullet = bullet;
@@ -62,7 +70,7 @@ Weapon.prototype.fire = function () {
             }
         } else {
             SoundManager.stop(this.sfx.fire);
-            SoundManager.worldPlay(this.sfx.die);
+            if (!IS_SERVER && this.player.id == gameEngine.local_player) SoundManager.worldPlay(this.sfx.die);
         }
     }
 };
@@ -81,7 +89,8 @@ function Bullet(weapon) {
     Entity.call(this);
     this.weapon = weapon;
     this._dieAtHit = false;
-    this.target = new Vec2(weapon.player.input.pointer.x, weapon.player.input.pointer.y);
+    // World-space aim point (same on every machine, independent of the shooter's camera).
+    this.target = new Vec2(weapon.player.input.aim.x, weapon.player.input.aim.y);
     this.position = weapon.player.position.Copy();
     this.speed = 1;
     this.tail = [];
@@ -97,6 +106,9 @@ function Bullet(weapon) {
     this.radius = 0.01;
     this.energy = null;
     this.zIndex = 1;
+    this.tracer = null; // {color: 'r,g,b', width: px, length: seconds of travel}
+    this.trail = null;  // particle trail type
+    this._lastImpactTick = -1;
     this.animationState = 'fly';
     this.anim = 'ANIMATIONS.BULLETS.REGULARBULLET';
 }
@@ -109,7 +121,30 @@ Bullet.prototype.kill = function () {
     Entity.prototype.kill.call(this);
 };
 Bullet.prototype.draw = function () {
-    Animation.animate(this.anim, this.animationState, this.position.x * SCALE, this.position.y * SCALE, this.angle);
+    var pos = this.renderPos();
+    var px = pos.x * SCALE, py = pos.y * SCALE;
+    if (this.tracer && this.physBody) {
+        var vel = this.physBody.GetLinearVelocity();
+        var speed = vel.Length() || 1;
+        var len = Math.min(this.tracer.length, speed * 0.02) * SCALE;
+        var ctx = drawingContext;
+        var tx = px - vel.x / speed * len, ty = py - vel.y / speed * len;
+        var grad = ctx.createLinearGradient(tx, ty, px, py);
+        grad.addColorStop(0, 'rgba(' + this.tracer.color + ',0)');
+        grad.addColorStop(1, 'rgba(' + this.tracer.color + ',0.9)');
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = this.tracer.width;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(tx, ty);
+        ctx.lineTo(px, py);
+        ctx.stroke();
+        ctx.restore();
+    }
+    if (this.glow) renderEngine.drawGlow(px, py, this.glow.size, this.glow.color, this.glow.alpha);
+    if (this.anim) Animation.animate(this.anim, this.animationState, px, py, this.angle);
 };
 Bullet.prototype.update = function () {
     Entity.prototype.update.call(this);
@@ -120,21 +155,18 @@ Bullet.prototype.update = function () {
         this.physBody.SetAngle(Math.atan2(vel.y, vel.x));
         this.angle = this.physBody.GetAngle();
         this.position = this.physBody.GetPosition();
+        if (!IS_SERVER && this.trail) particles.trail(this.trail, this.position.x, this.position.y, this.angle);
     }
 };
 Bullet.prototype.setup = function (engine) {
     Entity.prototype.setup.call(this, engine);
 
     this.direction = new Vec2(
-        this.target.x - this.weapon.player.getFixedPos().x,
-        this.target.y - this.weapon.player.getFixedPos().y
+        this.target.x - this.weapon.player.position.x,
+        this.target.y - this.weapon.player.position.y
     );
     this.weapon.player.physBody.SetAngle(Math.atan2(this.direction.y, this.direction.x));
     this.weapon.player.lookAngle = this.weapon.player.physBody.GetAngle();
-    this.direction.Set(
-        this.target.x - this.weapon.player.getFixedPos().x,
-        this.target.y - this.weapon.player.getFixedPos().y
-    );
     var pFix = this.weapon.player.getShootFix();
     this.direction.Subtract(pFix);
     this.position.Add(pFix);
@@ -175,18 +207,18 @@ Bullet.prototype.setup = function (engine) {
 };
 Bullet.prototype.colide = function (body) {
     if (!this.physBody) return;
-    var dmgBuf = this.weapon.player.getBuff('damage');
+    if (body === this.weapon.player) return;
+    var dmgBuf = this.weapon.player.getBuff('DoubleDamageBuff');
     var damage = this.damage;
     if (dmgBuf != null)
         damage *= dmgBuf.multipler;
     if (body.health != null)
-        this.engine.dealDamage(body.id, damage);
+        this.engine.dealDamage(body.id, damage, this.weapon.player.id);
     this.damage *= this.persistence;
-    SoundManager.worldPlay(body.sfx.hurt, body.position.Copy(), 1);
-
-    if (body.isPlayer && body.health - damage <= 0) {
-        this.weapon.player.killsPerMatch++;
-        body.deathsPerMatch++;
+    if (body.sfx && body.sfx.hurt) SoundManager.worldPlay(body.sfx.hurt, body.position.Copy(), 1);
+    if (!IS_SERVER && this._lastImpactTick !== this.engine.tick) {
+        this._lastImpactTick = this.engine.tick;
+        if (!body.isPlayer) particles.impact(this.position.x, this.position.y, this.angle, this.impactColor || [255, 220, 120]);
     }
     if (this._dieAtHit || body.isPlayer) this._markToKill = true;
 };

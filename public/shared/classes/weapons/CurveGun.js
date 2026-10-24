@@ -9,6 +9,8 @@ function CurveGun(player) {
     this.distance = 2000;
     this.delay = 1000;
     this.anim = 'ANIMATIONS.WEAPONS.CURVEGUN';
+    this.muzzle = [120, 255, 140];
+    this.recoil = 3;
     this.sfx = {
         fire: 'SFX.WEAPONS.CURVEGUN.FIRE',
         start: 'SFX.WEAPONS.CURVEGUN.START',
@@ -32,6 +34,9 @@ function LightBullet(weapon) {
     this.delay = 100;
     this.delayed = false;
     this.force = new Vec2(0,0);
+    this.trail = 'curve';
+    this.glow = {size: 70, color: [120, 255, 160], alpha: 0.7};
+    this.impactColor = [140, 255, 170];
     this.anim = 'ANIMATIONS.BULLETS.LIGHTBULLET';
 }
 
@@ -42,9 +47,10 @@ LightBullet.prototype.update = function () {
 
     if (Date.now()-this.createdAt >= this.delay && !this.delayed) {
         this.delayed = true;
+        // Curves toward wherever the shooter is aiming now (world space).
         this.force.Set(
-            this.weapon.player.input.pointer.x,
-            this.weapon.player.input.pointer.y
+            this.weapon.player.input.aim.x,
+            this.weapon.player.input.aim.y
         );
         this.force.Subtract(this.target);
         this.force.Multiply(this.engine.delta * this.speed);

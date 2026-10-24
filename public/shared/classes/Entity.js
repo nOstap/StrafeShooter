@@ -31,6 +31,28 @@ Entity.prototype._reset = function (data) {
 Entity.prototype.draw = function () {
 
 };
+// Remember the transform at the start of a tick so the renderer can draw between ticks.
+Entity.prototype.storePrev = function () {
+    if (!this.physBody) return;
+    var pos = this.physBody.GetPosition();
+    if (!this._prev) this._prev = {x: pos.x, y: pos.y, angle: this.angle};
+    this._prev.x = pos.x;
+    this._prev.y = pos.y;
+    this._prev.angle = this.angle;
+};
+Entity.prototype.snapPrev = function () {
+    this._prev = null;
+};
+// Position to draw at: interpolated between the last two simulation ticks.
+Entity.prototype.renderPos = function () {
+    var cur = this.physBody ? this.physBody.GetPosition() : this.position;
+    var a = IS_SERVER ? 1 : gameEngine.alpha;
+    if (!this._prev) return {x: cur.x, y: cur.y};
+    return {
+        x: this._prev.x + (cur.x - this._prev.x) * a,
+        y: this._prev.y + (cur.y - this._prev.y) * a
+    };
+};
 Entity.prototype.setup = function (engine) {
     this.engine = engine;
     this.createdAt = Date.now();

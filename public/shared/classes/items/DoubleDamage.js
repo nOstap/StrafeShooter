@@ -7,8 +7,9 @@ function DoubleDamage(setup) {
     this.expired = 15000;
     this.anim = 'ANIMATIONS.COLLECTABLES.DOUBLEDAMAGE';
     this.sfx = 'SFX.EFFECTS.DOUBLE_DAMAGE';
+    this.glowColor = [255, 70, 50];
     this.collect = function (player) {
-        if (!IS_SERVER) SoundManager.play(this.sfx, 1);
+        if (!IS_SERVER) SoundManager.worldPlay(this.sfx, this.position, 1);
         player.addBuff(new DoubleDamageBuff(this.expired, player));
         this._markToKill = true;
     };

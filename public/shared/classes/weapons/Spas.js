@@ -10,6 +10,8 @@ function Spas(player) {
     this.distance = 800;
     this.delay = 800;
     this.anim = 'ANIMATIONS.WEAPONS.SPAS';
+    this.muzzle = [255, 180, 70];
+    this.recoil = 6;
     this.sfx = {
         fire: 'SFX.WEAPONS.SPAS.FIRE',
         start: 'SFX.WEAPONS.SPAS.START',
@@ -31,5 +33,6 @@ function SpasBullet(weapon) {
     this.persistence = 1;
     this.friction = 1;
     this.restitution = 0.1;
+    this.tracer = {color: '255,190,110', width: 2.5, length: 0.6};
     this.anim = 'ANIMATIONS.BULLETS.SPASBULLET';
 }

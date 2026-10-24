@@ -179,6 +179,11 @@ Animation.load = function () {
                     frames: [
                         SPRITES_JSON.frames.curve_gun_weapon_crate
                     ]
+                }),
+                Bow: new Animation({
+                    frames: [
+                        SPRITES_JSON.frames.bow_weapon_crate
+                    ]
                 })
             },
             DOUBLEDAMAGE: new Animation({

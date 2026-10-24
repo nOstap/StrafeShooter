@@ -30,6 +30,8 @@ function Arrow(weapon) {
     this.damping = 200;
     this.persistence = 0.1;
     this.restitution = 0;
+    this.trail = 'arrow';
+    this.impactColor = [200, 160, 110];
     this.anim = 'ANIMATIONS.BULLETS.ARROW';
 }
 

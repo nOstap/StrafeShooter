@@ -88,6 +88,7 @@ Gui.prototype.joinGame = function () {
 };
 Gui.prototype.joinMatch = function () {
     gui.hide();
+    interface._clear();
     interface.create();
     SOCKET.emit('match_join', gameEngine.id);
 };
@@ -138,7 +139,7 @@ Gui.prototype.setPlayerList = function (game) {
     for (var p in game.players) {
         var player = game.players[p];
         for (var i = 0; i < ulp.length; i++) {
-            var list_item = createElement('li', '<span>' + player.displayName + '</span><span>' + player.killsPerMatch + '/' + player.deathsPerMatch + '</span><span>PLAYER</span>');
+            var list_item = createElement('li', '<span>' + _escapeHtml(player.displayName) + '</span><span>' + player.killsPerMatch + '/' + player.deathsPerMatch + '</span><span>' + (player.isReady ? 'READY' : 'PLAYER') + '</span>');
             list_item.addClass('list-item');
             ulp[i].child(list_item);
         }
@@ -146,7 +147,7 @@ Gui.prototype.setPlayerList = function (game) {
     for (var s in game.spectators) {
         var spectator = game.spectators[s];
         for (var i = 0; i < uls.length; i++) {
-            var list_item = createElement('li', '<span>' + spectator.displayName + '</span><span>N/N</span><span>SPECTATOR</span>');
+            var list_item = createElement('li', '<span>' + _escapeHtml(spectator.displayName) + '</span><span>N/N</span><span>SPECTATOR</span>');
             list_item.addClass('list-item');
             uls[i].child(list_item);
         }
@@ -173,7 +174,7 @@ Gui.prototype.setServerList = function (list) {
             this.parent.host.online = true;
             this.parent.host.status = 'online';
             this.parent.host.players = data.players + data.spectators;
-            this.parent.element = this.parent.elm.html('<span>' + data.name + '</span><span>' + this.parent.host.status + ' (' + this.parent.host.ping + 'ms)</span><span>' + this.parent.host.players + '/' + this.parent.host.max_players + '</span>');
+            this.parent.element = this.parent.elm.html('<span>' + _escapeHtml(data.name) + '</span><span>' + this.parent.host.status + ' (' + this.parent.host.ping + 'ms)</span><span>' + this.parent.host.players + '/' + this.parent.host.max_players + '</span>');
             this.disconnect();
         });
         server.elm.mousePressed(function () {

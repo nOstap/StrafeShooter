@@ -6,10 +6,11 @@ function AmmoBox(setup) {
     this.weapon = setup.weapon;
     this.team = setup.team;
     this.anim = 'ANIMATIONS.COLLECTABLES.AMMOBOX.'+this.weapon;
+    this.glowColor = [255, 210, 90];
     this.collect = function (player) {
-        if (!IS_SERVER) SoundManager.play(this.sfx, 1);
+        if (!IS_SERVER) SoundManager.worldPlay(this.sfx, this.position, 1);
         var weapon = player.weapons[this.weapon];
-        weapon.addAmmo();
+        if (weapon) weapon.addAmmo();
         this._markToKill = true;
     };
 }

@@ -46,17 +46,16 @@ var includes =
 
 vm.runInThisContext(includes);
 
-app.get('/*', function (req, res) {
-    res.sendfile(__dirname + '/index.html');
-});
-
 global.ioStats = io.of('/stats');
 global.ioGame = io.of('/game');
+
+var mapIndex = parseInt(process.env.game_map, 10) || 0;
+if (!MAPS[mapIndex]) mapIndex = 0;
 
 global.game = new GameEngine({
     id: _guid(),
     name: process.env.game_name,
-    map_index: process.env.game_map,
+    map_index: mapIndex,
     mode: process.env.game_mode,
     max_players: process.env.game_max_players,
     rounds: process.env.game_rounds,
@@ -65,9 +64,12 @@ global.game = new GameEngine({
 
 game.map = JSON.parse(fs.readFileSync(__dirname + '/../public/assets/' + MAPS[game.map_index] + '.json'));
 game.setup();
+console.log('Map: ' + MAPS[game.map_index]);
 
 function sync_loop() {
-    if (game) ioGame.emit('sync_game', game._simply());
+    // Compact snapshot; volatile = drop it rather than queue it if the client is behind,
+    // a newer one is always on its way.
+    if (game) ioGame.volatile.emit('sync_game', game._snapshot());
 }
 function game_loop() {
     if (game) game.update();
@@ -76,7 +78,11 @@ function game_loop() {
 Loop.run(CFG.SYNC_RATE, sync_loop);
 Loop.run(CFG.TICK_RATE, game_loop);
 
-app.use(express.static('public'));
+// Serve the game client too, so a single `npm run server` is enough for local play.
+app.use(express.static(__dirname + '/../public'));
+app.get('/*', function (req, res) {
+    res.sendFile(__dirname + '/index.html');
+});
 
 ioStats.on('connection', function () {
     ioStats.emit('connected', _gameStatsCreate(game));
@@ -85,26 +91,34 @@ ioGame.on('connection', function (socket) {
         var clientID = socket.conn.id;
         console.log('Client ' + clientID + ' connected.');
         var data = socket.handshake.query;
-        var player = new Player({id: clientID, displayName: data.displayName, head: data.head, body: data.body});
+        var displayName = String(data.displayName || '').replace(/[<>&"'`]/g, '').trim().substring(0, CFG.PLAYER.NAME_MAX_LENGTH) || 'NoNamePlayer';
+        var player = new Player({
+            id: clientID,
+            displayName: displayName,
+            head: Math.max(0, Math.min(2, parseInt(data.head, 10) || 0)),
+            body: Math.max(0, Math.min(1, parseInt(data.body, 10) || 0))
+        });
         game.addSpectator(player);
         socket.emit('connected', game._simply());
 
         ioGame.emit('player_joined_game', player._simply());
 
-        socket.on('deal_damage', function (entID, damage) {
-            game.dealDamage(entID, damage);
-        });
-        socket.on('collect_item', function (entID, itemID) {
-            game.dealDamage(entID, itemID);
-        });
         socket.on('match_join', function () {
             game.joinMatch(clientID);
         });
-        socket.on('player_input', function (data) {
-            game.applyPlayerInput(clientID, data.input, Date.now());
+        socket.on('player_ready', function () {
+            game.toggleReady(clientID);
         });
-        socket.on('disconnect', function () {
-            console.log("Client " + clientID + " has disconnected");
+        socket.on('player_input', function (input) {
+            var p = game.players[clientID];
+            if (!p || p.inputQueue.length > 64) return;
+            game.queueInput(clientID, input);
+        });
+        socket.on('ping_check', function (clientTime) {
+            socket.emit('pong_check', clientTime);
+        });
+        socket.on('disconnect', function (reason) {
+            console.log("Client " + clientID + " has disconnected (" + reason + ")");
             game.removePlayer(clientID);
             ioGame.emit('player_leaved', clientID);
         });

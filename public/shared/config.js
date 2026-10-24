@@ -33,6 +33,7 @@ const CFG = {
         51: 'READY',
         52: 'PAUSE'
     },
+    ONE_SHOT_ACTIONS: ['JUMP', 'READY', 'SWITCH_WEAPON', 'SWITCH_CURVE', 'SWITCH_ROCKET', 'SWITCH_LIGHT', 'SWITCH_BOW', 'SWITCH_SPAS', 'SWITCH_MACHINE'],
     GAME_MODES: {
         FFA: 0,
         TEAMS: 1,
@@ -60,10 +61,13 @@ const CFG = {
     '"full_screen":false' +
     '}',
     PLAYER: {
-        ACCELERATION: 18,
+        SPEED: 16, // world units per simulated second (world runs at PHYSICS_HZ per tick)
+        JUMP_MULTIPLIER: 1.3,
         MAX_HEALTH: 100,
-        SPAWN_TIME: 5000
+        SPAWN_TIME: 5000,
+        NAME_MAX_LENGTH: 20
     },
+    ITEM_RESPAWN_TIME: 15000,
     BULLET_TAIL: false,
     MAX_PLAYERS: 10,
     DEBUG: false,
@@ -73,11 +77,24 @@ const CFG = {
     MAP_MARGIN: 5,
     MAP_TEARING_X: 1,
     MAP_TEARING_Y: -2,
-    MAX_FRAME_RATE: 30,
-    SYNC_RATE: 1000 / 30.0, // MS
-    TICK_RATE: 1000 / 30.0, // MS
+    MAX_FRAME_RATE: 60,
+    SYNC_RATE: 1000 / 20.0, // MS between server snapshots
+    TICK_RATE: 1000 / 30.0, // MS per fixed simulation tick (same on server and client)
     PHYSICS_HZ: 1.0 / 60.0,
     JUMP_TIME: 400,
+    NET: {
+        INTERP_DELAY: 100,     // MS remote entities are rendered behind the server
+        MAX_INPUT_QUEUE: 8,    // server drops older inputs above this (bounds latency)
+        INPUT_QUEUE_TARGET: 2,
+        MAX_CATCHUP_TICKS: 5,  // client ticks per frame before it gives up and resyncs
+        SNAP_DISTANCE: 2,      // prediction error (world units) above which we teleport
+        MIN_CORRECTION: 0.01,
+        VISUAL_SMOOTHING: 0.25 // fraction of visual error removed per rendered frame
+    },
+    PARTICLES: {
+        MAX: 1500,
+        ENABLED: true
+    },
     MAX_ENTITIES: 5000,
     MAP_WIDTH: 100,
     MAP_HEIGHT: 100,
@@ -93,7 +110,22 @@ CAMERA_CENTER = {x: 0, y: 0};
 CAMERA_POS = {x: CFG.MAP_WIDTH * .5, y: CFG.MAP_HEIGHT * .5};
 FONT = null;
 MAPS = [
-    'test_map'
+    'test_map',
+    'arena',
+    'desert_outpost',
+    'frozen_lake'
+];
+MAP_NAMES = [
+    'Island (classic)',
+    'Arena',
+    'Desert Outpost',
+    'Frozen Lake'
+];
+TILESET_IMAGES = {};
+TILESET_FILES = [
+    'images/map_sprites.png',
+    'images/map_sprites_desert.png',
+    'images/map_sprites_winter.png'
 ];
 HOST_LIST = [];
 SPRITES_JSON = {};

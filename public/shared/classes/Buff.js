@@ -1,17 +1,24 @@
 function Buff(lifetime, player) {
     this.lifetime = lifetime;
     this.parent = player;
+    this.createdAt = Date.now();
     this.timeLeft = lifetime;
+    this._lastCountdown = null;
     this.sfx = {
         add: 'SFX.EFFECTS.BUFF_ADDING',
         beforeEnd: 'SFX.EFFECTS.COUNTER'
     };
     this._expired = false;
-    SoundManager.play(this.sfx.add);
+    var isLocal = !IS_SERVER && player && player.id == gameEngine.local_player;
+    if (isLocal) SoundManager.play(this.sfx.add);
     this.update = function () {
-        this.timeLeft = Date.now() - this.createdAt;
-        if (this.timeLeft <= 3000 && this.timeLeft % 1000 == 0) SoundManager.play(this.sfx.beforeEnd);
-        if (this.timeLeft == 0) {
+        this.timeLeft = this.lifetime - (Date.now() - this.createdAt);
+        var seconds = Math.ceil(this.timeLeft / 1000);
+        if (isLocal && seconds <= 3 && seconds > 0 && seconds !== this._lastCountdown) {
+            this._lastCountdown = seconds;
+            SoundManager.play(this.sfx.beforeEnd);
+        }
+        if (this.timeLeft <= 0 && !this._expired) {
             this.expired();
         }
     };
@@ -19,9 +26,7 @@ function Buff(lifetime, player) {
         this._expired = true;
     };
     this._simply = function () {
-        var simp = this;
-        delete simp.parent;
-        return simp;
+        return {lifetime: this.lifetime, timeLeft: this.timeLeft};
     };
 }
 DoubleDamageBuff.prototype = Object.create(Buff.prototype);

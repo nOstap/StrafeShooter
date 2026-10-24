@@ -86,6 +86,7 @@ function preload() {
     httpGet('/shared/classes/GameEngine.js', _addJsContent);
     httpGet('/shared/classes/PhysicsEngine.js', _addJsContent);
     httpGet('/classes/RenderEngine.js', _addJsContent);
+    httpGet('/classes/ParticleSystem.js', _addJsContent);
     httpGet('/shared/classes/SoundManager.js', _addJsContent);
     httpGet('/classes/Interface.js', _addJsContent);
     httpGet('/classes/Animation.js', _addJsContent);
@@ -127,70 +128,73 @@ function preload() {
     Gui.setLoadingInfo('Loading sprites');
     SPRITE_SHEET = loadImage('/assets/images/sprites.png', function () {
         INTERFACE_SPRITE_SHEET = loadImage('/assets/images/interface_sprites.png', function () {
-            MAP_SPRITE_SHEET = loadImage('/assets/images/map_sprites.png', function () {
-                Gui.setLoadingInfo('Loading maps');
-                loadJSON('/assets/test_map.json', function (data) {
-                    pre_loaded_maps.push(data);
-                    Gui.setLoadingInfo('Loading sounds');
-                    SFX = {
-                        BACKGROUND: loadSound('assets/sfx/background.mp3'),
-                        INTERFACE: {
-                            BUTTON_CLICK: loadSound('assets/sfx/interface/button_click.wav'),
-                            BUTTON_HOVER: loadSound('assets/sfx/interface/button_hover.wav')
-                        },
-                        EFFECTS: {
-                            PLAY: loadSound('assets/sfx/effects/play.wav'),
-                            JUMP: loadSound('assets/sfx/effects/jump.wav'),
-                            WALK: loadSound('assets/sfx/effects/walk2.mp3'),
-                            COLLECT: loadSound('assets/sfx/effects/collect.wav'),
-                            DOUBLE_DAMAGE: loadSound('assets/sfx/effects/quad_damage.wav'),
-                            MAXIMUM_DEFENSE: loadSound('assets/sfx/effects/quad_damage.wav'),
-                            LIFE_BOX: loadSound('assets/sfx/effects/life_box.wav'),
-                            RESPAWN: loadSound('assets/sfx/effects/respawn.wav'),
-                            BUFF_ADDING: loadSound('assets/sfx/effects/buff_adding.wav'),
-                            DEATH: loadSound('assets/sfx/effects/death.wav'),
-                            HURT: loadSound('assets/sfx/effects/hit.wav'),
-                            COUNTER: loadSound('assets/sfx/effects/counter.wav')
-                        },
-                        WEAPONS: {
-                            DIE: loadSound('assets/sfx/weapons/die.mp3'),
-                            MACHINEGUN: {
-                                FIRE: loadSound('assets/sfx/weapons/machinegun/fire.wav'),
-                                START: loadSound('assets/sfx/weapons/machinegun/start.wav')
-                            },
-                            CURVEGUN: {
-                                FIRE: loadSound('assets/sfx/weapons/curvegun/fire.wav'),
-                                START: loadSound('assets/sfx/weapons/curvegun/start.wav')
-                            },
-                            BOW: {
-                                FIRE: loadSound('assets/sfx/weapons/bow/fire.wav'),
-                                DIE: loadSound('assets/sfx/weapons/bow/start.wav'),
-                                START: loadSound('assets/sfx/weapons/bow/start.wav')
-                            },
-                            CHINESAW: {
-                                FIRE: loadSound('assets/sfx/weapons/chinesaw/fire.wav'),
-                                DIE: loadSound('assets/sfx/weapons/chinesaw/die.wav'),
-                                START: loadSound('assets/sfx/weapons/chinesaw/start.wav')
-                            },
-                            ROCKETLUNCHER: {
-                                FIRE: loadSound('assets/sfx/weapons/rocketluncher/fire.wav'),
-                                START: loadSound('assets/sfx/weapons/rocketluncher/start.wav'),
-                                FLY: loadSound('assets/sfx/weapons/rocketluncher/fly.wav'),
-                                HIT: loadSound('assets/sfx/weapons/rocketluncher/hit.wav')
-                            },
-                            LIGHTGUN: {
-                                FIRE: loadSound('assets/sfx/weapons/lightgun/fire.wav'),
-                                START: loadSound('assets/sfx/weapons/start.wav')
-                            },
-                            SPAS: {
-                                FIRE: loadSound('assets/sfx/weapons/spas/fire.wav'),
-                                START: loadSound('assets/sfx/weapons/spas/start.wav')
-                            }
-                        }
-                    }
-                });
-
+            TILESET_FILES.forEach(function (file) {
+                TILESET_IMAGES[file] = loadImage('/assets/' + file);
             });
+            MAP_SPRITE_SHEET = TILESET_IMAGES[TILESET_FILES[0]];
+            Gui.setLoadingInfo('Loading maps');
+            MAPS.forEach(function (name, index) {
+                loadJSON('/assets/' + name + '.json', function (data) {
+                    pre_loaded_maps[index] = data;
+                });
+            });
+            Gui.setLoadingInfo('Loading sounds');
+            SFX = {
+                BACKGROUND: loadSound('assets/sfx/background.mp3'),
+                INTERFACE: {
+                    BUTTON_CLICK: loadSound('assets/sfx/interface/button_click.wav'),
+                    BUTTON_HOVER: loadSound('assets/sfx/interface/button_hover.wav')
+                },
+                EFFECTS: {
+                    PLAY: loadSound('assets/sfx/effects/play.wav'),
+                    JUMP: loadSound('assets/sfx/effects/jump.wav'),
+                    WALK: loadSound('assets/sfx/effects/walk2.mp3'),
+                    COLLECT: loadSound('assets/sfx/effects/collect.wav'),
+                    DOUBLE_DAMAGE: loadSound('assets/sfx/effects/quad_damage.wav'),
+                    MAXIMUM_DEFENSE: loadSound('assets/sfx/effects/quad_damage.wav'),
+                    LIFE_BOX: loadSound('assets/sfx/effects/life_box.wav'),
+                    RESPAWN: loadSound('assets/sfx/effects/respawn.wav'),
+                    BUFF_ADDING: loadSound('assets/sfx/effects/buff_adding.wav'),
+                    DEATH: loadSound('assets/sfx/effects/death.wav'),
+                    HURT: loadSound('assets/sfx/effects/hit.wav'),
+                    COUNTER: loadSound('assets/sfx/effects/counter.wav')
+                },
+                WEAPONS: {
+                    DIE: loadSound('assets/sfx/weapons/die.mp3'),
+                    MACHINEGUN: {
+                        FIRE: loadSound('assets/sfx/weapons/machinegun/fire.wav'),
+                        START: loadSound('assets/sfx/weapons/machinegun/start.wav')
+                    },
+                    CURVEGUN: {
+                        FIRE: loadSound('assets/sfx/weapons/curvegun/fire.wav'),
+                        START: loadSound('assets/sfx/weapons/curvegun/start.wav')
+                    },
+                    BOW: {
+                        FIRE: loadSound('assets/sfx/weapons/bow/fire.wav'),
+                        DIE: loadSound('assets/sfx/weapons/bow/start.wav'),
+                        START: loadSound('assets/sfx/weapons/bow/start.wav')
+                    },
+                    CHINESAW: {
+                        FIRE: loadSound('assets/sfx/weapons/chinesaw/fire.wav'),
+                        DIE: loadSound('assets/sfx/weapons/chinesaw/die.wav'),
+                        START: loadSound('assets/sfx/weapons/chinesaw/start.wav')
+                    },
+                    ROCKETLUNCHER: {
+                        FIRE: loadSound('assets/sfx/weapons/rocketluncher/fire.wav'),
+                        START: loadSound('assets/sfx/weapons/rocketluncher/start.wav'),
+                        FLY: loadSound('assets/sfx/weapons/rocketluncher/fly.wav'),
+                        HIT: loadSound('assets/sfx/weapons/rocketluncher/hit.wav')
+                    },
+                    LIGHTGUN: {
+                        FIRE: loadSound('assets/sfx/weapons/lightgun/fire.wav'),
+                        START: loadSound('assets/sfx/weapons/start.wav')
+                    },
+                    SPAS: {
+                        FIRE: loadSound('assets/sfx/weapons/spas/fire.wav'),
+                        START: loadSound('assets/sfx/weapons/spas/start.wav')
+                    }
+                }
+            };
         });
     });
 
@@ -203,25 +207,32 @@ function setup() {
     gui.show('HOME');
     Animation.load();
     SoundManager.setup();
+    particles.setup();
 }
 function draw() {
     if (gameEngine && gameEngine.run) {
-        if (mouseX || mouseY) {
-            CAMERA_POS.x = width - (CAMERA_CENTER.x * SCALE + mouseX);
-            CAMERA_POS.y = height - (CAMERA_CENTER.y * SCALE + mouseY);
-        }
-
-        gameEngine.update();
-        gameEngine.recordInput();
+        gameEngine.frame();
+        var lp = gameEngine.players[gameEngine.local_player];
+        if (lp && lp.physBody) CAMERA_CENTER = lp.renderPos();
+        // Look-ahead camera: centred on the player, leaning towards the mouse.
+        var mx = mouseX || width / 2, my = mouseY || height / 2;
+        CAMERA_POS.x = width - (CAMERA_CENTER.x * SCALE + mx);
+        CAMERA_POS.y = height - (CAMERA_CENTER.y * SCALE + my);
         gameEngine.render();
     }
 }
 
 function keyPressed() {
     INPUT[CFG.KEY_MAP[keyCode]] = true;
+    // Keep space / arrows from scrolling the page while playing.
+    if (gameEngine && gameEngine.run && CFG.KEY_MAP[keyCode]) return false;
 }
 function keyReleased() {
-    INPUT[CFG.KEY_MAP[keyCode]] = false;
+    var action = CFG.KEY_MAP[keyCode];
+    // One-shot actions stay latched until the next simulation tick consumes them,
+    // otherwise a quick tap between two ticks is lost.
+    if (CFG.ONE_SHOT_ACTIONS.indexOf(action) !== -1) return;
+    INPUT[action] = false;
 }
 function mousePressed() {
     if (mouseButton === LEFT)
