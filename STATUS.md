@@ -51,12 +51,12 @@ Last updated on branch `network-stabilization-and-visuals` after the kill feed /
 
 ## Open items / where to continue
 
-- **Cloud Run is still private (403).** Revision `strafeshooter-00002-67n` (master as of
-  2026-10-24, kill feed + loot drops, `--timeout=3600` for websockets) is deployed and serves
-  the new client (verified with an identity token). The owner wants it public. Run once
-  (Claude Code's permission classifier blocks granting public access, twice now):
-  `gcloud run services add-iam-policy-binding strafeshooter --region europe-central2 --project strafeshooter-ostap --member=allUsers --role=roles/run.invoker`
-  Redeploy after code changes: `gcloud run deploy strafeshooter --source . --region europe-central2 --project strafeshooter-ostap`
+- **Cloud Run is public and live** (owner granted `allUsers` `roles/run.invoker` on 2026-10-24;
+  anonymous GET returns 200). Revision `strafeshooter-00002-67n` = master as of 2026-10-24
+  (kill feed + loot drops), `--timeout=3600` for websockets, 1 instance, session affinity.
+  It scales to zero when idle (cold start for the first visitor; `--min-instances=1` if wanted).
+  Redeploy after code changes: `gcloud run deploy strafeshooter --source . --region europe-central2 --project strafeshooter-ostap --timeout=3600`
+  (in PowerShell; in Git Bash use the full path "/c/Users/nosta/AppData/Local/Google/Cloud SDK/google-cloud-sdk/bin/gcloud.cmd").
 - **Unanswered question from the owner**: does the movement still "jump" (judder) after the
   frame-cap / camera fixes (monitor refresh rate?). ("Loot drop" is answered: item 9.)
 - The owner did not know what the Cloud Run IAM command (above) is about; explain it when
