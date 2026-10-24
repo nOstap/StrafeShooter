@@ -194,7 +194,7 @@ _setupSocket = function (server) {
         var killer = data.killer && gameEngine.players[data.killer];
         if (victim) {
             victim.health = Math.min(victim.health, 0);
-            interface.notification(killer ? killer.displayName + ' fragged ' + victim.displayName : victim.displayName + ' died', 2500);
+            interface.killFeed(killer || null, victim, data.weapon);
         }
         gui.setPlayerList(gameEngine);
     });
@@ -209,7 +209,10 @@ _setupSocket = function (server) {
         gameEngine.nextRound(round);
     });
     SOCKET.on('match_ended', function () {
-        if (gameEngine.during_match) gameEngine.endMatch();
+        if (!gameEngine.during_match) return;
+        // Standings are wiped by endMatch (players become spectators), so grab them first.
+        gui.setMatchResults(Interface.standings(gameEngine));
+        gameEngine.endMatch();
     });
     SOCKET.on('sync_game', function (data) {
         gameEngine.sync(data);
@@ -219,7 +222,7 @@ _setupSocket = function (server) {
     });
     if (window._pingTimer) clearInterval(window._pingTimer);
     window._pingTimer = setInterval(function () {
-        if (SOCKET && SOCKET.connected) SOCKET.emit('ping_check', Date.now());
+        if (SOCKET && SOCKET.connected) SOCKET.emit('ping_check', {t: Date.now(), p: gameEngine && gameEngine.ping != null ? gameEngine.ping : 0});
     }, 1000);
     SOCKET.on('disconnect', function (reason) {
         console.log('Socket disconnected: ' + reason);

@@ -1,7 +1,7 @@
 # Session handoff – where we stopped
 
-Last updated after commit `bf0a939` on branch `network-stabilization-and-visuals`
-(everything described here is committed and pushed; `master` is NOT merged yet, no PR opened).
+Last updated on branch `network-stabilization-and-visuals` after the kill feed / scoreboard work
+(`master` is NOT merged yet, no PR opened).
 
 ## Done so far (this branch)
 
@@ -27,6 +27,17 @@ Last updated after commit `bf0a939` on branch `network-stabilization-and-visuals
 7. **Deployment** – Dockerfile, host list entry "This server" (same origin). Deployed to
    Cloud Run: project `strafeshooter-ostap`, service `strafeshooter`, region
    `europe-central2`, URL https://strafeshooter-309943430508.europe-central2.run.app
+8. **Kill feed / scoreboard / match results** – `player_death` now carries the
+   weapon class name (`dealDamage` 4th arg; self-kills have `killer: null`), `Player.ping` is
+   reported by the client in `ping_check` (`{t, p}`) and broadcast in the snapshot as `pg`.
+   Client: `KillFeedElement` (top right, weapon icon, fades after 6 s) + centre banner when you
+   frag / get fragged, `ScoreboardElement` while Tab is held (place, name, K, D, ping; Tab no
+   longer moves browser focus), `Gui.setMatchResults` fills `#match-results` on the spectate
+   screen from `Interface.standings()` captured in the `match_ended` handler. Also fixed:
+   `Gui.show` called `fullscreen(false)` when not fullscreen (console error on every screen).
+   Verified with `npm run test:bots` (PASS) and a Playwright probe (scoreboard toggle, feed
+   entry with weapon, ping in snapshot, results panel after a frag-limit-2 match, no page
+   errors).
 
 ## Open items / where to continue
 
@@ -39,6 +50,8 @@ Last updated after commit `bf0a939` on branch `network-stabilization-and-visuals
   spawn/pickup/respawn were verified working server- and client-side, so it is either
   something visible in the browser or the feature "killed players drop their weapon ammo"
   (not implemented yet).
+- Pre-existing oddity seen while probing: after a match ends and bots auto-start the next one,
+  the "Runda N" countdown is drawn under the spectate panel for the human who is now a spectator.
 - Bots: CurveGun <-> LightGun swap flicker on nightmare, long hard-bot duels, per-tick budget
   tight on Frozen Lake in the first seconds (see ROADMAP.md section 1 remaining items).
 - Characters: Settings preview has no weapon; bots 7+ reuse looks.

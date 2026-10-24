@@ -47,7 +47,7 @@ Energy.prototype.colide = function (body) {
     if (dmgBuf != null)
         damage *= dmgBuf.multipler;
     if (body.health != null)
-        this.engine.dealDamage(body.id, damage, this.parent.weapon.player.id);
+        this.engine.dealDamage(body.id, damage, this.parent.weapon.player.id, this.parent.weapon.constructor.name);
     if (body.sfx && body.sfx.hurt) SoundManager.worldPlay(body.sfx.hurt, this.position, 1);
     if(body.isPlayer) this._markToKill = true;
 };

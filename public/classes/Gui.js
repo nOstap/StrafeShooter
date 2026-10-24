@@ -121,6 +121,7 @@ Gui.prototype.joinGame = function () {
 };
 Gui.prototype.joinMatch = function () {
     gui.hide();
+    select('#match-results').addClass('hidden');
     interface._clear();
     interface.create();
     SOCKET.emit('match_join', gameEngine.id);
@@ -186,6 +187,26 @@ Gui.prototype.setPlayerList = function (game) {
         }
     }
 };
+// Final standings of the match that just ended (Interface.standings rows), shown on the
+// spectate screen until the player joins the next match.
+Gui.prototype.setMatchResults = function (rows) {
+    // p5 select() takes an id, class or tag only (no descendant selectors).
+    var box = select('#match-results'), ul = select('#match-results-list');
+    if (!box || !ul) return;
+    ul.html('');
+    if (!rows || !rows.length) {
+        box.addClass('hidden');
+        return;
+    }
+    for (var i = 0; i < rows.length; i++) {
+        var r = rows[i];
+        var li = createElement('li', '<span>' + _escapeHtml(r.name) + (r.me ? ' (you)' : '') + '</span><span>' + r.k + '/' + r.d + '</span><span>' + (r.place === 1 ? 'WINNER' : r.place) + '</span>');
+        li.addClass('list-item');
+        if (r.place === 1) li.addClass('winner');
+        ul.child(li);
+    }
+    box.removeClass('hidden');
+};
 Gui.prototype.setServerList = function (list) {
     var ul = select('ul', select(GAME_STATES.SERVER_LIST.id));
     ul.html('');
@@ -237,8 +258,8 @@ Gui.prototype.show = function (s) {
     select(state.id).removeClass('hidden');
     if (gui && gui.game_settings.full_screen)
         fullscreen(true);
-    else
-        fullscreen(false);
+    else if (fullscreen())
+        fullscreen(false); // exitFullscreen() rejects (console error) when not in fullscreen
 };
 Gui.prototype.back = function () {
     var state = GAME_STATES[this.active_state];

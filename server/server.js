@@ -132,8 +132,14 @@ ioGame.on('connection', function (socket) {
             if (!p || p.inputQueue.length > 64) return;
             game.queueInput(clientID, input);
         });
-        socket.on('ping_check', function (clientTime) {
-            socket.emit('pong_check', clientTime);
+        socket.on('ping_check', function (msg) {
+            // {t: client time, p: last round trip the client measured}; the old bare
+            // number form is still accepted.
+            var isObj = msg && typeof msg === 'object';
+            socket.emit('pong_check', isObj ? msg.t : msg);
+            var p = game.players[clientID] || game.spectators[clientID];
+            if (p && isObj && typeof msg.p === 'number' && isFinite(msg.p))
+                p.ping = Math.max(0, Math.min(999, Math.round(msg.p)));
         });
         socket.on('disconnect', function (reason) {
             console.log("Client " + clientID + " has disconnected (" + reason + ")");

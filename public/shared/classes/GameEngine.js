@@ -488,6 +488,7 @@ GameEngine.prototype.sync = function (data) {
         player.maxHealth = sp.mh;
         player.killsPerMatch = sp.k;
         player.deathsPerMatch = sp.d;
+        if (sp.pg != null) player.ping = sp.pg;
         player.isDeadH = sp.dead;
         player.isReady = sp.rdy;
         if (!IS_SERVER && sp.h < prevHealth && prevHealth > 0) player.onDamaged(prevHealth - sp.h);
@@ -723,7 +724,7 @@ GameEngine.prototype.onItemCollected = function (itemID, playerID) {
     item._markToKill = true;
     if (!IS_SERVER) particles.pickup(item.position.x, item.position.y, item.glowColor);
 };
-GameEngine.prototype.dealDamage = function (entID, damage, attackerID) {
+GameEngine.prototype.dealDamage = function (entID, damage, attackerID, weapon) {
     if (!IS_SERVER) return;
     var ent = this.getEntityById(entID);
     if (!ent || ent.health == null) return;
@@ -732,8 +733,9 @@ GameEngine.prototype.dealDamage = function (entID, damage, attackerID) {
     if (ent.isPlayer && wasAlive && ent.health <= 0) {
         ent.deathsPerMatch++;
         var attacker = this.getEntityById(attackerID);
-        if (attacker && attacker !== ent) attacker.killsPerMatch++;
-        ioGame.emit('player_death', {id: ent.id, killer: attacker ? attacker.id : null});
+        var fragged = attacker && attacker !== ent;
+        if (fragged) attacker.killsPerMatch++;
+        ioGame.emit('player_death', {id: ent.id, killer: fragged ? attacker.id : null, weapon: weapon || null});
         if (this.mode === CFG.GAME_MODES.DEATHMATCH) this.spawn(ent.id, CFG.PLAYER.SPAWN_TIME, null, null);
     }
 };

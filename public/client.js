@@ -211,6 +211,10 @@ function setup() {
     Animation.load();
     SoundManager.setup();
     particles.setup();
+    // Alt-Tab away while holding Tab would otherwise leave the scoreboard stuck open.
+    window.addEventListener('blur', function () {
+        interface.scoreboardVisible = false;
+    });
 }
 function draw() {
     if (gameEngine && gameEngine.run) {
@@ -234,6 +238,11 @@ function isSpectating() {
     return !lp || lp.isDead;
 }
 function keyPressed() {
+    // Tab: hold to see the scoreboard (and keep the browser from moving focus).
+    if (keyCode === 9) {
+        interface.scoreboardVisible = true;
+        return false;
+    }
     // Dead or not in the match: left / right arrows switch the player being watched.
     if ((keyCode === 37 || keyCode === 39) && isSpectating()) gameEngine.spectateNext(keyCode === 39 ? 1 : -1);
     INPUT[CFG.KEY_MAP[keyCode]] = true;
@@ -241,6 +250,10 @@ function keyPressed() {
     if (gameEngine && gameEngine.run && CFG.KEY_MAP[keyCode]) return false;
 }
 function keyReleased() {
+    if (keyCode === 9) {
+        interface.scoreboardVisible = false;
+        return false;
+    }
     var action = CFG.KEY_MAP[keyCode];
     // One-shot actions stay latched until the next simulation tick consumes them,
     // otherwise a quick tap between two ticks is lost.

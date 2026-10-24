@@ -23,8 +23,10 @@ until the round ends, last one standing wins the round, `game_rounds` rounds per
 
 Controls: WASD move, mouse aim, left button fire, Space jump (a jump carries you over walls,
 crates and wrecks – not water), Q cycles weapons (R rocket, E curve gun, F light gun, Shift bow,
-C shotgun, Ctrl machine gun), 3 ready, 4 scoreboard. While dead or spectating, the camera
-follows another player; ← / → or a click switch who you watch.
+C shotgun, Ctrl machine gun), 3 ready, Tab (hold) scoreboard with kills / deaths / ping, 4 pause
+menu. While dead or spectating, the camera follows another player; ← / → or a click switch who
+you watch. Frags scroll through a kill feed (top right, with the weapon icon); when a match
+ends the spectate screen lists the final standings until you join the next one.
 
 `npm start` runs the client as an NW.js desktop app; `node game-server.js` is the public lobby
 server that can fork local game servers via `/local-server`.

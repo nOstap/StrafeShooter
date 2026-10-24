@@ -14,6 +14,7 @@ function Player(setup) {
     this.team = setup.team || null;
     this.killsPerMatch = setup.killsPerMatch || 0;
     this.deathsPerMatch = setup.deathsPerMatch || 0;
+    this.ping = setup.ping || 0;
     this.jumpAt = setup.jumpAt || null;
     this.jumpTick = null;
     this.isPlayer = true;
@@ -443,7 +444,7 @@ Player.prototype._reset = function (data) {
 Player.prototype.colide = function (body) {
     if (body.isPlayer) {
         if (this.activeWeapon == 'knife' && this.input.fire) {
-            this.engine.dealDamage(body.id, 100, this.id);
+            this.engine.dealDamage(body.id, 100, this.id, 'knife');
         }
     }
 };
@@ -504,6 +505,7 @@ Player.prototype._snapshot = function () {
         mh: this.maxHealth,
         k: this.killsPerMatch,
         d: this.deathsPerMatch,
+        pg: this.ping,
         w: this.activeWeapon,
         dead: this.isDeadH,
         rdy: this.isReady,
@@ -548,6 +550,7 @@ Player.prototype._simply = function () {
         lookAngle: this.lookAngle,
         killsPerMatch: this.killsPerMatch,
         deathsPerMatch: this.deathsPerMatch,
+        ping: this.ping,
         activeWeapon: this.activeWeapon,
         head: this.head,
         body: this.body,

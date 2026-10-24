@@ -59,7 +59,9 @@ each new biome is a palette + a few shape tweaks + one preset:
 ## 4. Gameplay & polish
 
 * Team mode (`CFG.GAME_MODES.TEAMS`) – spawns already carry `team_red` / `team_blue`.
-* Kill feed, scoreboard with ping column, end-of-match podium.
+* ~~Kill feed, scoreboard with ping column, end-of-match podium~~ – done: kill feed with weapon
+  icons, hold-Tab scoreboard (`ScoreboardElement`), results panel on the spectate screen. A
+  proper podium with character portraits is still open.
 * Weapon balance pass with the new deterministic tick (rocket self-damage, Spas spread).
 * Sound: positional panning (the `SoundManager.worldPlay` volume model already exists).
 * Mobile/touch controls (virtual sticks) – the input layer is already a plain `INPUT` map.

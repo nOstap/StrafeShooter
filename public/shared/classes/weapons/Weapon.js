@@ -213,7 +213,7 @@ Bullet.prototype.colide = function (body) {
     if (dmgBuf != null)
         damage *= dmgBuf.multipler;
     if (body.health != null)
-        this.engine.dealDamage(body.id, damage, this.weapon.player.id);
+        this.engine.dealDamage(body.id, damage, this.weapon.player.id, this.weapon.constructor.name);
     this.damage *= this.persistence;
     if (body.sfx && body.sfx.hurt) SoundManager.worldPlay(body.sfx.hurt, body.position.Copy(), 1);
     if (!IS_SERVER && this._lastImpactTick !== this.engine.tick) {
