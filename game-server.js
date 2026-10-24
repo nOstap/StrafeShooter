@@ -17,7 +17,7 @@ app.get('/', function (req, res) {
 // Only forward known game settings: passing the raw query string as the child's
 // environment let anyone set NODE_OPTIONS etc. (remote code execution).
 var LOCAL_SERVER_SETTINGS = ['game_name', 'game_map', 'game_mode', 'game_max_players', 'game_rounds', 'game_round_time',
-    'game_bots', 'game_bot_difficulty'];
+    'game_bots', 'game_bot_difficulty', 'game_frag_limit'];
 app.get('/local-server', function (req, res) {
     var env = {PATH: process.env.PATH};
     LOCAL_SERVER_SETTINGS.forEach(function (key) {

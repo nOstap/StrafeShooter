@@ -17,6 +17,15 @@ Open `http://localhost:3000`, pick the "Lokalny" server in the list, join and pr
 Server settings live in `server/.env` (`game_map` is an index into `MAPS` in
 `public/shared/config.js`: `0` island, `1` arena, `2` desert outpost, `3` frozen lake).
 
+Game modes (`game_mode`): `0` **Deathmatch** – you respawn 5 s after dying, first to
+`game_frag_limit` frags (default 20) or the time limit wins; `1` **Rounds** – dead players spectate
+until the round ends, last one standing wins the round, `game_rounds` rounds per match.
+
+Controls: WASD move, mouse aim, left button fire, Space jump (a jump carries you over walls,
+crates and wrecks – not water), Q cycles weapons (R rocket, E curve gun, F light gun, Shift bow,
+C shotgun, Ctrl machine gun), 3 ready, 4 scoreboard. While dead or spectating, the camera
+follows another player; ← / → or a click switch who you watch.
+
 `npm start` runs the client as an NW.js desktop app; `node game-server.js` is the public lobby
 server that can fork local game servers via `/local-server`.
 

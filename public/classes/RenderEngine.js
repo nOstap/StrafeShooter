@@ -59,6 +59,71 @@ RenderEngine.prototype.setup = function () {
     }
     particles.clear();
     this.crosshair = select('#crosshair');
+    this.chunkCache = {bottom: {}, top: {}};
+    this.chunkFrame = 0;
+    this.animatedTiles = [];
+    for (var gid in this.tileSet) if (this.tileSet[gid].animation) this.animatedTiles.push(this.tileSet[gid]);
+};
+RenderEngine.CHUNK = 10;          // tiles per chunk side
+RenderEngine.MAX_CHUNKS = 48;     // per layer set; LRU beyond this (48 x 4 MB)
+// Pre-render a CHUNK x CHUNK block of the given layers into an offscreen canvas. Chunks
+// that contain animated tiles are re-rendered whenever the animation frame changes.
+RenderEngine.prototype.renderChunk = function (layers, cx, cy, animKey) {
+    var size = RenderEngine.CHUNK, tw = CFG.TILE_WIDTH, th = CFG.TILE_HEIGHT;
+    var canvas = document.createElement('canvas');
+    canvas.width = size * tw;
+    canvas.height = size * th;
+    var ctx = canvas.getContext('2d');
+    var animated = false;
+    var x1 = Math.min(CFG.MAP_WIDTH, (cx + 1) * size), y1 = Math.min(CFG.MAP_HEIGHT, (cy + 1) * size);
+    for (var l = 0; l < layers.length; l++) {
+        var data = layers[l].data;
+        for (var y = cy * size; y < y1; y++) {
+            for (var x = cx * size; x < x1; x++) {
+                var tileId = data[y * CFG.MAP_WIDTH + x];
+                if (!tileId) continue;
+                var tile = this.tileSet[tileId];
+                if (!tile) continue;
+                var src = tile;
+                if (tile.animation) {
+                    animated = true;
+                    var frame = tile.animation.frames[tile.animation.activeFrame].frame;
+                    src = {sheet: tile.sheet, x: frame.x, y: frame.y, w: frame.w, h: frame.h};
+                }
+                ctx.drawImage(src.sheet.canvas, src.x, src.y, src.w, src.h, (x - cx * size) * tw, (y - cy * size) * th, tw, th);
+            }
+        }
+    }
+    return {canvas: canvas, animated: animated, animKey: animKey, used: 0};
+};
+RenderEngine.prototype.drawChunks = function (set, layers) {
+    var size = RenderEngine.CHUNK, tw = CFG.TILE_WIDTH, th = CFG.TILE_HEIGHT;
+    var cache = this.chunkCache[set];
+    var animKey = '';
+    for (var i = 0; i < this.animatedTiles.length; i++) animKey += this.animatedTiles[i].animation.activeFrame + ',';
+    var cx0 = Math.max(0, Math.floor(this.view.x0 / (tw * size))), cx1 = Math.min(Math.ceil(CFG.MAP_WIDTH / size) - 1, Math.floor(this.view.x1 / (tw * size)));
+    var cy0 = Math.max(0, Math.floor(this.view.y0 / (th * size))), cy1 = Math.min(Math.ceil(CFG.MAP_HEIGHT / size) - 1, Math.floor(this.view.y1 / (th * size)));
+    var ctx = drawingContext;
+    var count = 0;
+    for (var key in cache) count++;
+    for (var cy = cy0; cy <= cy1; cy++) {
+        for (var cx = cx0; cx <= cx1; cx++) {
+            var key = cx + ',' + cy;
+            var chunk = cache[key];
+            if (!chunk || (chunk.animated && chunk.animKey !== animKey)) {
+                if (!chunk && count >= RenderEngine.MAX_CHUNKS) {
+                    var oldest = null;
+                    for (var k in cache) if (!oldest || cache[k].used < cache[oldest].used) oldest = k;
+                    delete cache[oldest];
+                    count--;
+                }
+                if (!chunk) count++;
+                chunk = cache[key] = this.renderChunk(layers, cx, cy, animKey);
+            }
+            chunk.used = this.chunkFrame;
+            ctx.drawImage(chunk.canvas, cx * size * tw, cy * size * th);
+        }
+    }
 };
 RenderEngine.prototype.drawTile = function (tile, xd, yd) {
     if (tile.animation) {
@@ -106,15 +171,15 @@ RenderEngine.prototype.render = function (entities, drawDebug) {
     this.view.x1 = -camX + width;
     this.view.y1 = -camY + height;
     particles.update();
+    this.chunkFrame++;
+    for (var i = 0; i < this.animatedTiles.length; i++) this.animatedTiles[i].animation.tick();
 
     try {
         push();
         translate(camX, camY);
 
         this.renderOutside();
-        for (var i = 0; i < this.bottomLayers.length; i++) {
-            this.renderLayer(this.bottomLayers[i]);
-        }
+        this.drawChunks('bottom', this.bottomLayers);
         particles.drawDecals();
         particles.draw('ground');
 
@@ -138,9 +203,7 @@ RenderEngine.prototype.render = function (entities, drawDebug) {
         }
         particles.draw('air');
 
-        for (var i = 0; i < this.topLayers.length; i++) {
-            this.renderLayer(this.topLayers[i]);
-        }
+        this.drawChunks('top', this.topLayers);
         particles.draw('ui');
         if (drawDebug) physicsEngine.world.DrawDebugData();
         pop();

@@ -3,7 +3,9 @@ function GameEngine(setup) {
     this.local_player = null;
     this.name = setup.name || null;
     this.host = setup.host || null;
-    this.mode = setup.mode || 0;
+    this.mode = parseInt(setup.mode, 10) || 0;
+    this.frag_limit = parseInt(setup.frag_limit, 10) || CFG.DEFAULT_FRAG_LIMIT;
+    this.spectateId = null;
     this.server_time = setup.server_time || Date.now();
     this.map_index = parseInt(setup.map_index, 10) || 0;
     this.map = null;
@@ -178,10 +180,12 @@ GameEngine.prototype.update = function () {
     }
     var flags = this.setFlags();
     if (IS_SERVER) {
+        var timeUp = this.during_match && Date.now() - this.during_match > this.round_time * 1000 * 60;
         if (!this.during_match) {
             if (flags.ready) this.startMatch();
-        } else if (Date.now() - this.during_match > this.round_time * 1000 * 60 ||
-            flags.roundWin || flags.allDie) {
+        } else if (this.mode === CFG.GAME_MODES.DEATHMATCH) {
+            if (timeUp || flags.fragLimit) this.endMatch();
+        } else if (timeUp || flags.roundWin || flags.allDie) {
             this.nextRound();
         }
     }
@@ -200,6 +204,7 @@ GameEngine.prototype.setFlags = function () {
         else
             flags.ready &= this.players[p].isReady;
         if (this.players[p].isDeadH) killed++;
+        if (this.players[p].killsPerMatch >= this.frag_limit) flags.fragLimit = true;
     }
     var pl = Object.keys(this.players).length;
     if (pl == killed && this.during_match) flags.allDie = true;
@@ -499,7 +504,7 @@ GameEngine.prototype.sync = function (data) {
                 if (player.weapons[weaponNames[w]]) player.weapons[weaponNames[w]].ammunition = sp.am[w];
             if (player.activeWeapon != sp.w) player.switchWeapon(sp.w);
             if (sp.air && !player.isInAir) player.jumpTick = this.tick;
-            player.isInAir = sp.air;
+            player.setAirborne(sp.air);
         }
     }
     for (var c in data.collectables) {
@@ -729,7 +734,31 @@ GameEngine.prototype.dealDamage = function (entID, damage, attackerID) {
         var attacker = this.getEntityById(attackerID);
         if (attacker && attacker !== ent) attacker.killsPerMatch++;
         ioGame.emit('player_death', {id: ent.id, killer: attacker ? attacker.id : null});
+        if (this.mode === CFG.GAME_MODES.DEATHMATCH) this.spawn(ent.id, CFG.PLAYER.SPAWN_TIME, null, null);
     }
+};
+// Client: who the camera follows. The local player while alive, otherwise another living
+// player (dead players and spectators can cycle with the arrow keys / a click).
+GameEngine.prototype.cameraTarget = function () {
+    var lp = this.players[this.local_player];
+    if (lp && !lp.isDead) {
+        this.spectateId = null;
+        return lp;
+    }
+    var cur = this.players[this.spectateId];
+    if (cur && !cur.isDead && cur !== lp) return cur;
+    return this.spectateNext(1) || lp;
+};
+GameEngine.prototype.spectateNext = function (dir) {
+    var ids = [];
+    for (var p in this.players) if (p != this.local_player && !this.players[p].isDead) ids.push(p);
+    if (!ids.length) {
+        this.spectateId = null;
+        return null;
+    }
+    var i = ids.indexOf(this.spectateId);
+    this.spectateId = ids[(i + dir + ids.length) % ids.length];
+    return this.players[this.spectateId];
 };
 GameEngine.prototype._simply = function () {
     var game = {
@@ -740,6 +769,7 @@ GameEngine.prototype._simply = function () {
         max_players: this.max_players,
         map_index: this.map_index,
         round_time: this.round_time,
+        frag_limit: this.frag_limit,
         server_time: Date.now(),
         during_match: this.during_match,
         currentRound: this.currentRound,

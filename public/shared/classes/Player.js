@@ -148,6 +148,44 @@ Player.prototype.setup = function (engine) {
     this.physBody.SetLinearVelocity(new Vec2(0, 0));
     this.position = this.physBody.GetPosition();
     this._prev = null;
+    this._airborne = false;
+};
+// While jumping the player sails over walls and props (not water): drop those bits from
+// every fixture's collision mask, and put them back on landing.
+Player.prototype.setAirborne = function (air) {
+    this.isInAir = air;
+    if (!this.physBody || this._airborne === air) return;
+    this._airborne = air;
+    var solid = CFG.COLLISION_GROUPS.WALL | CFG.COLLISION_GROUPS.OBSTACLE;
+    for (var f = this.physBody.GetFixtureList(); f; f = f.GetNext()) {
+        var filter = f.GetFilterData();
+        if (air) {
+            f._groundMask = filter.maskBits;
+            filter.maskBits = filter.maskBits & ~solid;
+        } else if (f._groundMask != null) {
+            filter.maskBits = f._groundMask;
+        }
+        f.SetFilterData(filter);
+    }
+    // box2dweb's SetFilterData never re-flags existing contacts (inverted null check),
+    // so a wall we are already touching would keep blocking us.
+    for (var ce = this.physBody.GetContactList(); ce; ce = ce.next) ce.contact.FlagForFiltering();
+};
+// True when the body polygon still overlaps a wall or prop (landing there would wedge us in).
+Player.prototype.overlapsSolid = function () {
+    var solid = CFG.COLLISION_GROUPS.WALL | CFG.COLLISION_GROUPS.OBSTACLE;
+    var hit = false;
+    var check = function (fixture) {
+        if (fixture.GetFilterData().categoryBits & solid) {
+            hit = true;
+            return false;
+        }
+        return true;
+    };
+    for (var f = this.physBody.GetFixtureList(); f && !hit; f = f.GetNext()) {
+        physicsEngine.world.QueryAABB(check, f.GetAABB());
+    }
+    return hit;
 };
 Player.prototype.renderPos = function () {
     var pos = Entity.prototype.renderPos.call(this);
@@ -250,8 +288,12 @@ Player.prototype.update = function () {
     }
     if (this.physBody !== null) {
         if (this.isInAir && this.jumpTick !== null && this.engine.tick - this.jumpTick >= Player.JUMP_TICKS) {
-            this.isInAir = false;
-            if (!IS_SERVER) particles.dust(this.position.x, this.position.y, 10);
+            var overdue = this.engine.tick - this.jumpTick - Player.JUMP_TICKS;
+            // Keep flying (same velocity) while we would land inside a wall, up to a grace limit.
+            if (overdue >= CFG.PLAYER.JUMP_LANDING_GRACE || !this.overlapsSolid()) {
+                this.setAirborne(false);
+                if (!IS_SERVER) particles.dust(this.position.x, this.position.y, 10);
+            }
         }
         this.lookAngle = this.physBody.GetAngle();
         this.position = this.physBody.GetPosition();
@@ -371,7 +413,7 @@ Player.prototype._reset = function (data) {
     this.isDeadH = data.isDeadH || false;
     this.isSpectator = data.isSpectator || this.isSpectator;
     this._spawned = data._spawned || this._spawned;
-    this.isInAir = false;
+    this.setAirborne(false);
     this.path = [];
     this.buffs = {};
     if (this.physBody) {
@@ -395,7 +437,7 @@ Player.prototype.show = function () {
 };
 Player.prototype.jump = function () {
     SoundManager.worldPlay(this.sfx.jump, this.position);
-    this.isInAir = true;
+    this.setAirborne(true);
     this.jumpAt = Date.now();
     this.jumpTick = this.engine.tick;
     this.animationState = 'jump';

@@ -48,6 +48,12 @@ Animation.prototype.animate = function (x, y, angle) {
     }
 };
 
+// Advance the frame clock without drawing (used for tiles that are pre-rendered into chunks).
+Animation.prototype.tick = function () {
+    if (Date.now() - this.stepStart > this.stepTime) this.nextStep();
+    return this.activeFrame;
+};
+
 Animation.animate = function (animation, animationState, x, y, angle) {
     var animName = animation + (animationState ? '.' + animationState : '');
     var animObj = eval(animName);

@@ -22,7 +22,7 @@ var PATH = {
 };
 
 var MOVE = {
-    STEP: 0.2667,    // metres walked per tick (CFG.PLAYER.SPEED * PHYSICS_HZ)
+    STEP: 0,         // metres walked per tick; derived from CFG below (getter: CFG exists only once the engine is loaded)
     WAYPOINT_RADIUS: 0.35,
     LOOKAHEAD_EVERY: 5,
     FIELD_CHAIN: 12,
@@ -31,7 +31,7 @@ var MOVE = {
     FEELER_ANGLES_DEG: [30, 60, 90],
     SEPARATION_RADIUS: 1.0,
     SEPARATION_WEIGHT: 0.6,
-    JUMP_CLEAR: 4.8,
+    JUMP_CLEAR: 0,   // jump length plus a safety margin; derived from CFG below
     TELEPORT: 2,
     STUCK_WINDOW: 15,
     STUCK_MIN_MOVE: 0.6,
@@ -43,6 +43,18 @@ var MOVE = {
     POI_REACHED: 1.5,
     POINT_REACHED: 0.5
 };
+// Movement constants follow the engine's CFG (which only exists once the shared code is
+// loaded, so they are getters rather than values).
+Object.defineProperty(MOVE, 'STEP', {
+    get: function () {
+        return CFG.PLAYER.SPEED * CFG.PHYSICS_HZ;
+    }
+});
+Object.defineProperty(MOVE, 'JUMP_CLEAR', {
+    get: function () {
+        return CFG.PLAYER.SPEED * CFG.PLAYER.JUMP_MULTIPLIER * Math.round(CFG.JUMP_TIME / CFG.TICK_RATE) * CFG.PHYSICS_HZ + 0.65;
+    }
+});
 
 var ROSTER = {
     REJOIN_DELAY_TICKS: 90,      // autostart only: pause between bots-only matches

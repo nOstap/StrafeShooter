@@ -124,7 +124,9 @@ Interface.prototype.create = function () {
     var score = new TextElement({
         text: function () {
             var me = gameEngine.players[gameEngine.local_player];
-            var round = gameEngine.during_match ? 'Round ' + gameEngine.currentRound + '/' + gameEngine.rounds : 'Warm-up - press 3 when ready';
+            var round = !gameEngine.during_match ? 'Warm-up - press 3 when ready' :
+                gameEngine.mode === CFG.GAME_MODES.DEATHMATCH ? 'Deathmatch - first to ' + gameEngine.frag_limit :
+                    'Round ' + gameEngine.currentRound + '/' + gameEngine.rounds;
             return round + (me ? '    K ' + me.killsPerMatch + ' / D ' + me.deathsPerMatch : '');
         },
         position: {x: .5, y: .04},
@@ -134,8 +136,25 @@ Interface.prototype.create = function () {
         vAlign: CENTER,
         lifetime: null
     });
+    var spectating = new TextElement({
+        text: function () {
+            var me = gameEngine.players[gameEngine.local_player];
+            if (me && !me.isDead) return '';
+            var target = gameEngine.players[gameEngine.spectateId];
+            var respawn = gameEngine.mode === CFG.GAME_MODES.DEATHMATCH ? 'respawning...' : 'wait for the next round';
+            return (me ? 'You died - ' + respawn + '   ' : '') + (target ? 'Watching ' + target.displayName + '  (← → or click to switch)' : '');
+        },
+        position: {x: .5, y: .1},
+        fontSize: 22,
+        border: 4,
+        color: '#ffd166',
+        hAlign: CENTER,
+        vAlign: CENTER,
+        lifetime: null
+    });
     interface.addElement(netInfo);
     interface.addElement(score);
+    interface.addElement(spectating);
     interface.addElement(gplayerHealth);
     interface.addElement(tplayerHealth);
 };

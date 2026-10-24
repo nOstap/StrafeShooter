@@ -57,6 +57,7 @@ global.game = new GameEngine({
     name: process.env.game_name,
     map_index: mapIndex,
     mode: process.env.game_mode,
+    frag_limit: process.env.game_frag_limit,
     max_players: process.env.game_max_players,
     rounds: process.env.game_rounds,
     round_time: process.env.game_round_time

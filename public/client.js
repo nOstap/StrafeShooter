@@ -212,8 +212,8 @@ function setup() {
 function draw() {
     if (gameEngine && gameEngine.run) {
         gameEngine.frame();
-        var lp = gameEngine.players[gameEngine.local_player];
-        if (lp && lp.physBody) CAMERA_CENTER = lp.renderPos();
+        var target = gameEngine.cameraTarget();
+        if (target && target.physBody) CAMERA_CENTER = target.renderPos();
         // Look-ahead camera: centred on the player, leaning towards the mouse. The lean is
         // smoothed so a quick flick of the mouse does not yank the whole view.
         var mx = mouseX || width / 2, my = mouseY || height / 2;
@@ -225,7 +225,14 @@ function draw() {
     }
 }
 
+function isSpectating() {
+    if (!gameEngine || !gameEngine.run) return false;
+    var lp = gameEngine.players[gameEngine.local_player];
+    return !lp || lp.isDead;
+}
 function keyPressed() {
+    // Dead or not in the match: left / right arrows switch the player being watched.
+    if ((keyCode === 37 || keyCode === 39) && isSpectating()) gameEngine.spectateNext(keyCode === 39 ? 1 : -1);
     INPUT[CFG.KEY_MAP[keyCode]] = true;
     // Keep space / arrows from scrolling the page while playing.
     if (gameEngine && gameEngine.run && CFG.KEY_MAP[keyCode]) return false;
@@ -238,8 +245,9 @@ function keyReleased() {
     INPUT[action] = false;
 }
 function mousePressed() {
-    if (mouseButton === LEFT)
-        INPUT.FIRE = true;
+    if (mouseButton !== LEFT) return;
+    if (isSpectating()) gameEngine.spectateNext(1);
+    else INPUT.FIRE = true;
 }
 function mouseReleased() {
     if (mouseButton === LEFT)

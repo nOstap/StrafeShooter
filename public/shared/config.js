@@ -35,10 +35,10 @@ const CFG = {
     },
     ONE_SHOT_ACTIONS: ['JUMP', 'READY', 'SWITCH_WEAPON', 'SWITCH_CURVE', 'SWITCH_ROCKET', 'SWITCH_LIGHT', 'SWITCH_BOW', 'SWITCH_SPAS', 'SWITCH_MACHINE'],
     GAME_MODES: {
-        FFA: 0,
-        TEAMS: 1,
-        THEHUNTED: 2
+        DEATHMATCH: 0, // respawn after death, first to the frag limit (or time) wins
+        ROUNDS: 1      // dead players spectate until the round ends; last one standing wins
     },
+    DEFAULT_FRAG_LIMIT: 20,
     COLLISION_GROUPS: {
         NOTHING: 0x0000,
         PLAYER: 0x0001,
@@ -61,8 +61,9 @@ const CFG = {
     '"full_screen":false' +
     '}',
     PLAYER: {
-        SPEED: 16, // world units per simulated second (world runs at PHYSICS_HZ per tick)
+        SPEED: 12.8, // world units per simulated second (world runs at PHYSICS_HZ per tick)
         JUMP_MULTIPLIER: 1.3,
+        JUMP_LANDING_GRACE: 15, // extra ticks a jump may last when it would end inside a wall
         MAX_HEALTH: 100,
         SPAWN_TIME: 5000,
         NAME_MAX_LENGTH: 20
