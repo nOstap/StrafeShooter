@@ -31,7 +31,8 @@ function GameEngine(setup) {
     this.run = false;
     this._spawnDefer = [];
     this._killedEnt = [];
-    this._itemRespawns = [];
+    this.lootSpots = [];
+    this._nextDropAt = 0;
 
     // Client-side networking state
     this.inputSeq = 0;
@@ -66,6 +67,7 @@ GameEngine.prototype.setup = function (data) {
         }
     }, this);
     this.loadMap();
+    this.setupLootSpots();
     if (!IS_SERVER) {
         this.local_player = SOCKET.id;
         //LOAD INIT GAME DATA
@@ -125,13 +127,7 @@ GameEngine.prototype.update = function () {
     }
 
     if (IS_SERVER) {
-        // Item pick-ups happen inside Box2D's contact callback where the world is locked,
-        // so the replacement crate is created here, outside the physics step.
-        for (var r = 0; r < this._itemRespawns.length; r++) {
-            var it = this._itemRespawns[r];
-            this.spawnItem(it.itemClass, it.weapon, it.delay);
-        }
-        this._itemRespawns = [];
+        this.dropLoot();
         this.processInputs();
     }
     else {
@@ -312,6 +308,7 @@ GameEngine.prototype.clearMap = function () {
         this.collectables[cIndex]._markToKill = true;
     }
     this.collectables = {};
+    for (var i = 0; i < this.lootSpots.length; i++) this.lootSpots[i].itemID = null;
     return true;
 };
 GameEngine.prototype.spawnPlayers = function () {
@@ -320,18 +317,52 @@ GameEngine.prototype.spawnPlayers = function () {
         this.spawn(this.players[p].id, CFG.PLAYER.SPAWN_TIME, null, null);
     }
 };
-GameEngine.prototype.spawnItems = function () {
-    if (!IS_SERVER) return;
-    var cratespawns = _findByKey(this.map.layers, 'properties.type', 'CrateSpawn', true);
-    for (var index in cratespawns) {
-        for (var i = 0; i < cratespawns[index].objects.length; i++) {
-            var obj = cratespawns[index].objects[i];
-            this.spawnItem(cratespawns[index].name.replace('Spawns', ''), obj.type || null, 5000);
+// Loot drops. Every object of a CrateSpawn layer is one location (the layer name gives the
+// item class, the object type the weapon). A location holds at most one box; while a match
+// runs a single random package drops onto a random free location every CFG.LOOT.DROP_INTERVAL,
+// and a collected box frees its location for a later drop.
+GameEngine.prototype.setupLootSpots = function () {
+    this.lootSpots = [];
+    if (!this.map) return;
+    var layers = _findByKey(this.map.layers, 'properties.type', 'CrateSpawn', true);
+    for (var l in layers) {
+        var itemClass = layers[l].name.replace('Spawns', '');
+        for (var i = 0; i < layers[l].objects.length; i++) {
+            var obj = layers[l].objects[i];
+            this.lootSpots.push({itemClass: itemClass, weapon: obj.type || null, area: obj, itemID: null});
         }
     }
 };
-GameEngine.prototype.spawnItem = function (itemClass, weapon, delay) {
-    if (!IS_SERVER || !global[itemClass]) return;
+// Round start: all locations are free, the first package comes after CFG.LOOT.FIRST_DROP.
+GameEngine.prototype.spawnItems = function () {
+    if (!IS_SERVER) return;
+    for (var i = 0; i < this.lootSpots.length; i++) this.lootSpots[i].itemID = null;
+    this._nextDropAt = Date.now() + CFG.LOOT.FIRST_DROP;
+};
+GameEngine.prototype.lootCap = function () {
+    return Math.min(this.lootSpots.length,
+        Math.max(CFG.LOOT.MIN_ACTIVE, Math.ceil(this.lootSpots.length * CFG.LOOT.MAX_ACTIVE_RATIO)));
+};
+GameEngine.prototype.dropLoot = function () {
+    if (!IS_SERVER || !this.during_match || !this.lootSpots.length) return;
+    var now = Date.now();
+    if (now < this._nextDropAt) return;
+    this._nextDropAt = now + _superRandom(CFG.LOOT.DROP_INTERVAL[0], CFG.LOOT.DROP_INTERVAL[1]);
+    var free = [], active = 0;
+    for (var i = 0; i < this.lootSpots.length; i++) {
+        if (this.lootSpots[i].itemID) active++;
+        else free.push(this.lootSpots[i]);
+    }
+    if (!free.length || active >= this.lootCap()) return;
+    var spot = _superRandom(free);
+    spot.itemID = this.spawnItem(spot.itemClass, spot.weapon, CFG.LOOT.DROP_DELAY, spot.area);
+};
+GameEngine.prototype.freeLootSpot = function (itemID) {
+    for (var i = 0; i < this.lootSpots.length; i++)
+        if (this.lootSpots[i].itemID === itemID) this.lootSpots[i].itemID = null;
+};
+GameEngine.prototype.spawnItem = function (itemClass, weapon, delay, area) {
+    if (!IS_SERVER || !global[itemClass]) return null;
     var ent = new global[itemClass]({
         id: itemClass + _guid(),
         type: 'dynamic',
@@ -339,7 +370,8 @@ GameEngine.prototype.spawnItem = function (itemClass, weapon, delay) {
         weapon: weapon
     });
     this.addEntity(ent);
-    this.spawn(ent.id, delay, null, ent._simply());
+    this.spawn(ent.id, delay, null, ent._simply(), area);
+    return ent.id;
 };
 GameEngine.prototype.joinMatch = function (id) {
     var player = this.spectators[id];
@@ -356,13 +388,17 @@ GameEngine.prototype.joinMatch = function (id) {
 GameEngine.prototype.addSpectator = function (s) {
     this.spectators[s.id] = s;
 };
-GameEngine.prototype.spawn = function (entityID, delay, team, entDef) {
+// `area` (a spawn layer object) pins the spawn to that location; otherwise a random object
+// of the entity's own spawn layer is used.
+GameEngine.prototype.spawn = function (entityID, delay, team, entDef, area) {
     if (!IS_SERVER) return;
     var entity = this.getEntityById(entityID);
     if (!entity) return false;
-    var spawns = _findByKey(this.map.layers, 'name', entity.class + 'Spawns');
-    if (!spawns) return false;
-    var area = _superRandom(spawns.objects);
+    if (!area) {
+        var spawns = _findByKey(this.map.layers, 'name', entity.class + 'Spawns');
+        if (!spawns) return false;
+        area = _superRandom(spawns.objects);
+    }
     var spawn = {
         delay: delay,
         entityID: entityID,
@@ -714,7 +750,7 @@ GameEngine.prototype.collectItem = function (entID, itemID) {
     item.collect(player);
     if (!item._markToKill) return;
     ioGame.emit('item_collected', {item: itemID, player: entID});
-    this._itemRespawns.push({itemClass: item.class, weapon: item.weapon || null, delay: CFG.ITEM_RESPAWN_TIME});
+    this.freeLootSpot(itemID);
 };
 GameEngine.prototype.onItemCollected = function (itemID, playerID) {
     var item = this.getEntityById(itemID);

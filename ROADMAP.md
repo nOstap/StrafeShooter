@@ -22,7 +22,8 @@ fill empty slots (`game_bots=N` in `.env`).
     already served by `GET /debug/bots`).
   * Headless bot-vs-bot matches on a fake clock (see §5), so whole matches become reproducible
     and fast enough for CI.
-  * Item timing (remember when a crate was taken and be there when it respawns).
+  * Item timing: react to drops (a package lands on a random free location every few seconds,
+    `CFG.LOOT`) instead of camping fixed respawns.
   * Team tactics for `CFG.GAME_MODES.TEAMS`.
 
 ## 2. Single-player campaign ("Strafe Tour", Quake 3 style)

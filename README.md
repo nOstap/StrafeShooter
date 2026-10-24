@@ -28,6 +28,11 @@ menu. While dead or spectating, the camera follows another player; ← / → or 
 you watch. Frags scroll through a kill feed (top right, with the weapon icon); when a match
 ends the spectate screen lists the final standings until you join the next one.
 
+Loot drops: every crate spawn drawn on the map is one location that holds at most one box.
+While a match runs a single random package lands on a random free location every 4-9 s (the
+first one 3 s after the round starts), at most half of the locations are occupied at once, and
+picking a box up frees its location for a later drop. Tune it in `CFG.LOOT` (`config.js`).
+
 `npm start` runs the client as an NW.js desktop app; `node game-server.js` is the public lobby
 server that can fork local game servers via `/local-server`.
 

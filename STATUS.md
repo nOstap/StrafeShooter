@@ -38,6 +38,16 @@ Last updated on branch `network-stabilization-and-visuals` after the kill feed /
    Verified with `npm run test:bots` (PASS) and a Playwright probe (scoreboard toggle, feed
    entry with weapon, ping in snapshot, results panel after a frag-limit-2 match, no page
    errors).
+9. **Loot drops** (owner: "random loot drop, one package, only one box per location") –
+   `GameEngine.setupLootSpots` turns every CrateSpawn object into a location; `dropLoot`
+   (server, every tick) lands ONE random package on ONE random free location every
+   `CFG.LOOT.DROP_INTERVAL` (4-9 s, first after 3 s), capped at `MAX_ACTIVE_RATIO` of the
+   locations (min 3); `collectItem` frees the location; `clearMap` / round start reset all.
+   Replaces the old "spawn every box at a random area of its layer + respawn 15 s after
+   pick-up" (`_itemRespawns`, `CFG.ITEM_RESPAWN_TIME` removed), which stacked several boxes on
+   one spot. `spawn()` takes an optional `area` to pin the position. Verified with a fake-clock
+   engine test on all four maps (no location ever held two boxes, boxes always inside their
+   location, occupancy never above the cap) and `npm run test:bots` (PASS).
 
 ## Open items / where to continue
 
@@ -45,11 +55,10 @@ Last updated on branch `network-stabilization-and-visuals` after the kill feed /
   grant public access itself):
   `gcloud run services add-iam-policy-binding strafeshooter --region europe-central2 --project strafeshooter-ostap --member=allUsers --role=roles/run.invoker`
   Redeploy after code changes: `gcloud run deploy strafeshooter --source . --region europe-central2 --project strafeshooter-ostap`
-- **Unanswered questions from the owner**: does the movement still "jump" (judder) after the
-  frame-cap / camera fixes (monitor refresh rate?); and what "loot drop" meant – crates
-  spawn/pickup/respawn were verified working server- and client-side, so it is either
-  something visible in the browser or the feature "killed players drop their weapon ammo"
-  (not implemented yet).
+- **Unanswered question from the owner**: does the movement still "jump" (judder) after the
+  frame-cap / camera fixes (monitor refresh rate?). ("Loot drop" is answered: item 9.)
+- The owner did not know what the Cloud Run IAM command (above) is about; explain it when
+  asked: it makes the deployed URL reachable without a Google login.
 - Pre-existing oddity seen while probing: after a match ends and bots auto-start the next one,
   the "Runda N" countdown is drawn under the spectate panel for the human who is now a spectator.
 - Bots: CurveGun <-> LightGun swap flicker on nightmare, long hard-bot duels, per-tick budget

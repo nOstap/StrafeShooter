@@ -69,7 +69,14 @@ const CFG = {
         SPAWN_TIME: 5000,
         NAME_MAX_LENGTH: 20
     },
-    ITEM_RESPAWN_TIME: 15000,
+    // Loot drops: every crate spawn object on the map is one location holding at most one box.
+    LOOT: {
+        FIRST_DROP: 3000,            // ms after the round starts until the first package
+        DROP_INTERVAL: [4000, 9000], // ms between packages (random in this range)
+        DROP_DELAY: 1000,            // the box lands this long after the drop is announced
+        MAX_ACTIVE_RATIO: 0.5,       // at most this share of the locations holds a box at once
+        MIN_ACTIVE: 3                // ... but never fewer than this many (small maps)
+    },
     BULLET_TAIL: false,
     MAX_PLAYERS: 10,
     DEBUG: false,
